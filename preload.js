@@ -10,5 +10,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   setAutoStart: (enabled) => {
     ipcRenderer.send('set-autostart', enabled);
+  },
+  setDarkMode: (enabled) => {
+    ipcRenderer.send('set-dark-mode', enabled);
+  },
+  getDarkMode: () => ipcRenderer.invoke('get-dark-mode'),
+  onDarkModeChange: (callback) => {
+    ipcRenderer.on('dark-mode-changed', (event, enabled) => callback(enabled));
   }
 });

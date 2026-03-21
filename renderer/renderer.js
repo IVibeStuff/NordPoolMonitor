@@ -2,6 +2,8 @@
 const api = new NordPoolAPI();
 let priceChart = null;
 let currentCountry = 'ee'; // Default country
+let isDarkMode = false;
+let lastData = null;
 
 // Notification state tracking
 let notificationState = {
@@ -117,6 +119,7 @@ async function loadPrices(forceRefresh = false) {
     hideError();
 
     const data = await api.fetchPrices(currentCountry, forceRefresh);
+    lastData = data;
     console.log('Price data loaded:', data);
 
     updateCurrentPrice(data);
@@ -400,8 +403,9 @@ function updateChart(data) {
     const isCurrent = index === visibleCurrentIndex;
     
     if (isCurrent) {
-      backgroundColor.push('#000');
-      borderColor.push('#000');
+      const currentBarColor = isDarkMode ? '#ffffff' : '#000000';
+      backgroundColor.push(currentBarColor);
+      borderColor.push(currentBarColor);
       borderWidth.push(4);
     } else {
       backgroundColor.push(p.color);
@@ -442,12 +446,12 @@ function updateChart(data) {
               const price = allPrices[index];
               const isCurrent = context.dataIndex === visibleCurrentIndex;
               const isFuture = price.timestamp > now;
-              
+
               let label = `${context.parsed.y.toFixed(2)} ${data.currency}/kWh`;
               if (isCurrent) label += ' ⚡ CURRENT';
               else if (isFuture) label += ' (upcoming)';
               else label += ' (past)';
-              
+
               return label;
             },
             title: function(context) {
@@ -455,19 +459,21 @@ function updateChart(data) {
               const timestamp = allPrices[index].timestamp;
               const date = timestamp.getDate();
               const today = now.getDate();
-              
+
               const hour = timestamp.getHours();
               const minute = timestamp.getMinutes();
-              
+
               let dayLabel;
               if (date === today) dayLabel = 'Today';
               else if (date > today) dayLabel = 'Tomorrow';
               else dayLabel = 'Yesterday';
-              
+
               return `${dayLabel} ${hour}:${minute.toString().padStart(2, '0')}`;
             }
           },
-          backgroundColor: 'rgba(41, 37, 36, 0.95)',
+          backgroundColor: isDarkMode ? 'rgba(245, 245, 244, 0.95)' : 'rgba(41, 37, 36, 0.95)',
+          titleColor: isDarkMode ? '#292524' : '#ffffff',
+          bodyColor: isDarkMode ? '#78716c' : '#e7e5e4',
           padding: 12,
           titleFont: {
             size: 14,
@@ -478,7 +484,7 @@ function updateChart(data) {
             size: 13,
             family: 'Inter'
           },
-          borderColor: '#e7e5e4',
+          borderColor: isDarkMode ? '#44403c' : '#e7e5e4',
           borderWidth: 1
         }
       },
@@ -506,7 +512,7 @@ function updateChart(data) {
             color: '#a8a29e'
           },
           grid: {
-            color: '#f5f5f4'
+            color: isDarkMode ? '#3c3836' : '#f5f5f4'
           }
         },
         x: {
@@ -527,7 +533,7 @@ function updateChart(data) {
                 const timestamp = allPrices[actualIndex].timestamp;
                 const minute = timestamp.getMinutes();
                 const hour = timestamp.getHours();
-                
+
                 // Show only even hours at :00 to avoid overlap
                 if (minute === 0 && hour % 2 === 0) {
                   return `${hour.toString().padStart(2, '0')}:00`;
@@ -546,7 +552,9 @@ function updateChart(data) {
           grid: {
             color: function(context) {
               const index = context.index;
-              return index === visibleCurrentIndex ? 'rgba(41, 37, 36, 0.2)' : '#f5f5f4';
+              const gridBase = isDarkMode ? '#3c3836' : '#f5f5f4';
+              const currentLine = isDarkMode ? 'rgba(245, 245, 244, 0.2)' : 'rgba(41, 37, 36, 0.2)';
+              return index === visibleCurrentIndex ? currentLine : gridBase;
             },
             lineWidth: function(context) {
               const index = context.index;
@@ -658,8 +666,31 @@ function refreshData() {
   loadPrices(true);
 }
 
+// Apply or remove dark mode class on body
+function applyDarkMode(enabled) {
+  document.body.classList.toggle('dark', enabled);
+  localStorage.setItem('nordpool-darkmode', enabled ? 'true' : 'false');
+}
+
 // Initialize app
 async function init() {
+  // Sync dark mode from electron-store (authoritative source)
+  if (window.electronAPI && window.electronAPI.getDarkMode) {
+    isDarkMode = await window.electronAPI.getDarkMode();
+  } else {
+    isDarkMode = localStorage.getItem('nordpool-darkmode') === 'true';
+  }
+  applyDarkMode(isDarkMode);
+
+  // Listen for dark mode changes from settings window
+  if (window.electronAPI && window.electronAPI.onDarkModeChange) {
+    window.electronAPI.onDarkModeChange((enabled) => {
+      isDarkMode = enabled;
+      applyDarkMode(enabled);
+      if (lastData) updateChart(lastData);
+    });
+  }
+
   setupCountrySelector();
   await requestNotificationPermission();
   await loadPrices();
