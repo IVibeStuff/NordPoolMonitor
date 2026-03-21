@@ -187,21 +187,19 @@ class NordPoolAPI {
       }
     }
 
-    // Calculate statistics
-    const allAvailablePrices = [...todayPrices, ...tomorrowPrices];
-    
-    if (allAvailablePrices.length === 0) {
+    // Calculate statistics using today's prices only
+    if (todayPrices.length === 0) {
       throw new Error('No price data available');
     }
-    
-    const priceValues = allAvailablePrices.map(p => p.price);
-    
+
+    const todayPriceValues = todayPrices.map(p => p.price);
+
     const stats = {
-      min: Math.min(...priceValues),
-      max: Math.max(...priceValues),
-      average: priceValues.reduce((a, b) => a + b, 0) / priceValues.length,
-      q1: this.calculatePercentile(priceValues, 25),
-      q3: this.calculatePercentile(priceValues, 75)
+      min: Math.min(...todayPriceValues),
+      max: Math.max(...todayPriceValues),
+      average: todayPriceValues.reduce((a, b) => a + b, 0) / todayPriceValues.length,
+      q1: this.calculatePercentile(todayPriceValues, 25),
+      q3: this.calculatePercentile(todayPriceValues, 75)
     };
 
     // Add color coding to each price (all prices including yesterday)
