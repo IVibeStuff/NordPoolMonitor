@@ -417,6 +417,7 @@ function updateChart(data) {
   if (priceChart) {
     priceChart.destroy();
   }
+  document.getElementById('reset-zoom-btn').style.display = 'none';
 
   priceChart = new Chart(ctx, {
     type: 'bar',
@@ -486,6 +487,20 @@ function updateChart(data) {
           },
           borderColor: isDarkMode ? '#44403c' : '#e7e5e4',
           borderWidth: 1
+        },
+        zoom: {
+          zoom: {
+            wheel: { enabled: true },
+            pinch: { enabled: true },
+            mode: 'x',
+            onZoom: () => {
+              document.getElementById('reset-zoom-btn').style.display = 'block';
+            }
+          },
+          pan: {
+            enabled: true,
+            mode: 'x'
+          }
         }
       },
       scales: {
@@ -664,6 +679,14 @@ function startAutoRefresh() {
 function refreshData() {
   console.log('Manual refresh triggered - forcing cache bypass');
   loadPrices(true);
+}
+
+// Reset chart zoom to full 48h view
+function resetChartZoom() {
+  if (priceChart) {
+    priceChart.resetZoom();
+    document.getElementById('reset-zoom-btn').style.display = 'none';
+  }
 }
 
 // Apply or remove dark mode class on body
