@@ -297,6 +297,25 @@
     .price-moderate { color: var(--warning); }
     .price-expensive { color: var(--danger); }
 
+    /* Reset Zoom Button */
+    .reset-zoom-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .reset-zoom-btn:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
     /* Refresh Button */
     .refresh-btn {
       background: var(--bg-card);
@@ -417,7 +436,10 @@
 
         <!-- Chart -->
         <div class="card">
-          <div class="card-title">48-Hour Price Window</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div class="card-title" style="margin-bottom:0;">48-Hour Price Window</div>
+            <button class="reset-zoom-btn" id="reset-zoom-btn" onclick="resetChartZoom()" style="display:none;">Reset Zoom</button>
+          </div>
           <div class="chart-container">
             <canvas id="priceChart"></canvas>
           </div>
@@ -485,6 +507,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
   <script src="api.js"></script>
   <script src="renderer.js"></script>
