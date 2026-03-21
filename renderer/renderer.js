@@ -419,7 +419,12 @@ function updateChart(data) {
   }
   document.getElementById('reset-zoom-btn').style.display = 'none';
 
-  priceChart = new Chart(ctx, {
+  // Remove any previous dblclick listener before creating new chart
+  const canvas = document.getElementById('priceChart');
+  canvas.replaceWith(canvas.cloneNode(true));
+  const freshCtx = document.getElementById('priceChart').getContext('2d');
+
+  priceChart = new Chart(freshCtx, {
     type: 'bar',
     data: {
       labels: labels,
@@ -580,6 +585,9 @@ function updateChart(data) {
       }
     }
   });
+
+  // Double-click on chart to reset zoom
+  document.getElementById('priceChart').addEventListener('dblclick', resetChartZoom);
 }
 
 // Update last update time
