@@ -34,3 +34,6 @@ desktop.ini
 # Testing
 .nyc_output/
 coverage/
+
+# Claude
+CLAUDE.md

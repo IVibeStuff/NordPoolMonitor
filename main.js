@@ -152,9 +152,9 @@ function createWindow() {
   
   mainWindow = new BrowserWindow({
     width: 1400,
-    height: 900,
+    height: 1100,
     minWidth: 1000,
-    minHeight: 700,
+    minHeight: 850,
     icon: startIcon,
     webPreferences: {
       nodeIntegration: false,
@@ -200,7 +200,8 @@ function createSettingsWindow() {
 
   settingsWindow = new BrowserWindow({
     width: 500,
-    height: 400,
+    height: 610,
+    resizable: false,
     parent: mainWindow,
     modal: true,
     show: false,
@@ -216,6 +217,7 @@ function createSettingsWindow() {
   settingsWindow.setMenu(null);
 
   // Create settings HTML
+  const darkModeEnabled = store.get('darkMode', false);
   const settingsHTML = `
 <!DOCTYPE html>
 <html>
@@ -228,26 +230,27 @@ function createSettingsWindow() {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #fafaf9;
       color: #292524;
-      padding: 40px;
+      padding: 24px;
+      overflow: hidden;
     }
     h1 {
       font-size: 24px;
       font-weight: 300;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       letter-spacing: -0.5px;
     }
     .setting-group {
       background: white;
       border: 1px solid #e7e5e4;
       border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
     }
     .setting-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 0;
+      padding: 8px 0;
     }
     .setting-label {
       font-size: 15px;
@@ -262,6 +265,7 @@ function createSettingsWindow() {
       position: relative;
       width: 48px;
       height: 28px;
+      flex-shrink: 0;
       background: #d1d5db;
       border-radius: 14px;
       cursor: pointer;
@@ -292,16 +296,38 @@ function createSettingsWindow() {
       border-radius: 8px;
       cursor: pointer;
       font-size: 14px;
-      margin-top: 20px;
+      margin-top: 16px;
     }
     button:hover {
       background: #44403c;
     }
+
+    /* Dark Mode */
+    body.dark {
+      background: #1c1917;
+      color: #f5f5f4;
+    }
+    body.dark .setting-group {
+      background: #292524;
+      border-color: #44403c;
+    }
+    body.dark .setting-label {
+      color: #f5f5f4;
+    }
+    body.dark .setting-desc {
+      color: #a8a29e;
+    }
+    body.dark button {
+      background: #44403c;
+    }
+    body.dark button:hover {
+      background: #57534e;
+    }
   </style>
 </head>
-<body>
+<body class="${darkModeEnabled ? 'dark' : ''}">
   <h1>Settings</h1>
-  
+
   <div class="setting-group">
     <div class="setting-row">
       <div>
@@ -332,26 +358,43 @@ function createSettingsWindow() {
     </div>
   </div>
 
+  <div class="setting-group">
+    <div class="setting-row">
+      <div>
+        <div class="setting-label">Dark Mode</div>
+        <div class="setting-desc">Switch the main window to a dark colour scheme</div>
+      </div>
+      <div class="toggle ${darkModeEnabled ? 'active' : ''}" id="darkmode-toggle" onclick="toggleDarkMode()"></div>
+    </div>
+  </div>
+
   <button onclick="closeSettings()">Close</button>
 
   <script>
     // Check current auto-start setting
     const autoStartEnabled = localStorage.getItem('autostart') === 'true';
-    const toggle = document.getElementById('autostart-toggle');
+    const autostartToggle = document.getElementById('autostart-toggle');
     if (autoStartEnabled) {
-      toggle.classList.add('active');
+      autostartToggle.classList.add('active');
     }
 
     function toggleAutoStart() {
       const toggle = document.getElementById('autostart-toggle');
       const enabled = !toggle.classList.contains('active');
-      
       toggle.classList.toggle('active');
       localStorage.setItem('autostart', enabled);
-      
-      // Send to main process
       if (window.electronAPI && window.electronAPI.setAutoStart) {
         window.electronAPI.setAutoStart(enabled);
+      }
+    }
+
+    function toggleDarkMode() {
+      const toggle = document.getElementById('darkmode-toggle');
+      const enabled = !toggle.classList.contains('active');
+      toggle.classList.toggle('active');
+      document.body.classList.toggle('dark', enabled);
+      if (window.electronAPI && window.electronAPI.setDarkMode) {
+        window.electronAPI.setDarkMode(enabled);
       }
     }
 
@@ -427,7 +470,7 @@ function createTray() {
 function updateTrayMenu(currentPrice = null, priceLevel = 'moderate') {
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'NordPool Monitor',
+      label: `NordPool Monitor v${app.getVersion()}`,
       enabled: false
     },
     { type: 'separator' },
@@ -655,6 +698,18 @@ ipcMain.on('set-autostart', (event, enabled) => {
   });
   store.set('autostart', enabled);
   console.log(`Auto-start ${enabled ? 'enabled' : 'disabled'}`);
+});
+
+// Return current dark mode state
+ipcMain.handle('get-dark-mode', () => store.get('darkMode', false));
+
+// Handle dark mode setting
+ipcMain.on('set-dark-mode', (event, enabled) => {
+  store.set('darkMode', enabled);
+  if (mainWindow) {
+    mainWindow.webContents.send('dark-mode-changed', enabled);
+  }
+  console.log(`Dark mode ${enabled ? 'enabled' : 'disabled'}`);
 });
 
 // App ready

@@ -204,8 +204,8 @@ class NordPoolAPI {
       q3: this.calculatePercentile(priceValues, 75)
     };
 
-    // Add color coding to each price
-    allAvailablePrices.forEach(p => {
+    // Add color coding to each price (all prices including yesterday)
+    prices.forEach(p => {
       if (p.price <= stats.q1) {
         p.color = '#16a34a'; // Green (cheap)
         p.zone = 'cheap';
