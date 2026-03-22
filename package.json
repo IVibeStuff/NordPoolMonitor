@@ -1,7 +1,7 @@
 {
   "name": "nordpool-monitor",
   "productName": "NordPool Monitor",
-  "version": "5.5.1",
+  "version": "5.6.5",
   "description": "Professional electricity price monitor for Estonia, Finland, Latvia, and Lithuania",
   "main": "main.js",
   "author": "NordPool Monitor",
@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "axios": "^1.6.0",
-    "electron-store": "^8.1.0"
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.8.3"
   },
   "devDependencies": {
     "electron": "^28.0.0",
@@ -30,11 +31,14 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "build/icon.ico",
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "artifactName": "NordPool-Monitor-Setup-${version}.${ext}",
+      "verifyUpdateCodeSignature": false
     },
     "nsis": {
       "oneClick": false,
@@ -47,12 +51,16 @@
       "installerHeaderIcon": "build/icon.ico"
     },
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "icon": "build/icon.icns",
       "category": "public.app-category.utilities"
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "icon": "build/icon.png",
       "category": "Utility"
     },
@@ -65,6 +73,11 @@
     "directories": {
       "buildResources": "build",
       "output": "dist"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "IVibeStuff",
+      "repo": "NordPoolMonitor"
     }
   }
 }

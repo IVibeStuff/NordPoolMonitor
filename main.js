@@ -1,7 +1,8 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, Notification, ipcMain } = require('electron');
+const { app, BrowserWindow, Tray, Menu, nativeImage, Notification, ipcMain, shell } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const axios = require('axios');
+const { autoUpdater } = require('electron-updater');
 
 // Store for persistent settings
 const store = new Store();
@@ -18,6 +19,63 @@ let notificationState = {
   hasNotifiedThisPeriod: false,
   lastNotificationTime: null
 };
+
+// Update state
+let updateState = {
+  available: false,
+  downloaded: false,
+  version: null
+};
+
+// Configure auto updater
+autoUpdater.autoDownload = false;
+autoUpdater.allowPrerelease = false;
+
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for update...');
+});
+
+autoUpdater.on('update-not-available', () => {
+  console.log('No update available.');
+});
+
+autoUpdater.on('download-progress', (progress) => {
+  console.log(`Download progress: ${Math.round(progress.percent)}%`);
+  if (tray) tray.setToolTip(`NordPool Monitor - Downloading update: ${Math.round(progress.percent)}%`);
+});
+
+autoUpdater.on('update-available', (info) => {
+  updateState.available = true;
+  updateState.version = info.version;
+  console.log(`Update available: v${info.version}`);
+  updateTrayMenu();
+
+  new Notification({
+    title: 'NordPool Monitor — Update Available',
+    body: `Version ${info.version} is available. Open the tray menu to download.`,
+    silent: false
+  }).show();
+});
+
+autoUpdater.on('update-downloaded', () => {
+  updateState.downloaded = true;
+  console.log('Update downloaded, ready to install');
+  updateTrayMenu();
+
+  new Notification({
+    title: 'NordPool Monitor — Update Ready',
+    body: 'Update downloaded. Click "Restart to Update" in the tray menu to install.'
+  }).show();
+});
+
+autoUpdater.on('error', (err) => {
+  console.warn('Auto-updater error:', err.message);
+  new Notification({
+    title: 'NordPool Monitor — Update Error',
+    body: err.message,
+    silent: true
+  }).show();
+});
 
 // Create colored icon using raw pixel data (most reliable on Windows)
 function createColoredIconPNG(colorHex) {
@@ -500,6 +558,18 @@ function updateTrayMenu(currentPrice = null, priceLevel = 'moderate') {
       }
     },
     { type: 'separator' },
+    ...(updateState.downloaded ? [{
+      label: '⬆ Restart to Update',
+      click: () => {
+        app.isQuitting = true;
+        autoUpdater.quitAndInstall();
+      }
+    }] : updateState.available ? [{
+      label: `⬇ Download Update (v${updateState.version})`,
+      click: () => {
+        autoUpdater.downloadUpdate();
+      }
+    }] : []),
     {
       label: 'Quit',
       click: () => {
@@ -717,6 +787,11 @@ app.whenReady().then(() => {
   createWindow();
   createTray();
   startPriceMonitoring();
+
+  // Check for updates after a short delay (only in production)
+  if (app.isPackaged) {
+    setTimeout(() => autoUpdater.checkForUpdates(), 5000);
+  }
   
   // Set auto-start if previously enabled
   const autoStart = store.get('autostart', false);
