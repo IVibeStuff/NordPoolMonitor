@@ -33,11 +33,17 @@ Professional desktop application for monitoring Nord Pool electricity prices.
 
 ### **For End Users:**
 
-1. Download `NordPool-Monitor-Setup-5.5.1.exe`
+1. Download `NordPool-Monitor-Setup-5.6.5.exe`
 2. Run the installer
 3. Follow installation wizard
 4. Launch from desktop shortcut or Start menu
 5. App runs in system tray
+
+> **Windows SmartScreen warning?** This app is not code-signed, so Windows may show a "Windows protected your PC" prompt when running the installer. This is expected — the app is safe to install.
+> 1. Click **"More info"**
+> 2. Click **"Run anyway"**
+>
+> The same applies when installing an update downloaded through the app.
 
 ### **For Developers:**
 
