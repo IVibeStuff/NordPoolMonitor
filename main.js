@@ -63,7 +63,7 @@ autoUpdater.on('update-downloaded', () => {
 
   new Notification({
     title: 'NordPool Monitor — Update Ready',
-    body: 'Update downloaded. Click "Restart to Update" in the app to install.'
+    body: 'Update downloaded and ready to install. Open the app window to apply it.'
   }).show();
 });
 
