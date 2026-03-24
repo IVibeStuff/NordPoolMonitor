@@ -258,7 +258,7 @@ function createSettingsWindow() {
 
   settingsWindow = new BrowserWindow({
     width: 500,
-    height: 610,
+    height: 720,
     resizable: false,
     parent: mainWindow,
     modal: true,
@@ -279,6 +279,10 @@ function createSettingsWindow() {
   const autoStartEnabled = store.get('autostart', false);
   const lowPriceAlertEnabled = store.get('lowPriceAlert', true);
   const highPriceAlertEnabled = store.get('highPriceAlert', false);
+  const networkFee = store.get('networkFee', 0);
+  const energyTax = store.get('energyTax', 0);
+  const supplierMargin = store.get('supplierMargin', 0);
+  const includeVat = store.get('includeVat', false);
   const settingsHTML = `
 <!DOCTYPE html>
 <html>
@@ -384,6 +388,47 @@ function createSettingsWindow() {
     body.dark button:hover {
       background: #57534e;
     }
+    .fee-input {
+      width: 80px;
+      padding: 6px 8px;
+      border: 1px solid #e7e5e4;
+      border-radius: 8px;
+      font-size: 14px;
+      text-align: right;
+      background: #f5f5f4;
+      color: #292524;
+      flex-shrink: 0;
+    }
+    body.dark .fee-input {
+      background: #1c1917;
+      border-color: #44403c;
+      color: #f5f5f4;
+    }
+    .fee-group-title {
+      font-size: 15px;
+      color: #292524;
+      margin-bottom: 4px;
+    }
+    .fee-group-desc {
+      font-size: 13px;
+      color: #78716c;
+      margin-bottom: 12px;
+    }
+    body.dark .fee-group-title { color: #f5f5f4; }
+    body.dark .fee-group-desc { color: #a8a29e; }
+    .fee-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-top: 1px solid #f5f5f4;
+    }
+    body.dark .fee-row { border-top-color: #44403c; }
+    .fee-row-label {
+      font-size: 13px;
+      color: #292524;
+    }
+    body.dark .fee-row-label { color: #d6d3d1; }
   </style>
 </head>
 <body class="${darkModeEnabled ? 'dark' : ''}">
@@ -416,6 +461,27 @@ function createSettingsWindow() {
         <div class="setting-desc">Notify when electricity price is at its highest</div>
       </div>
       <div class="toggle ${highPriceAlertEnabled ? 'active' : ''}" id="highprice-toggle" onclick="toggleHighPriceAlert()"></div>
+    </div>
+  </div>
+
+  <div class="setting-group">
+    <div class="fee-group-title">Electricity Fees</div>
+    <div class="fee-group-desc">Added to spot price in the Cost Calculator</div>
+    <div class="fee-row">
+      <div class="fee-row-label">Network fee (s/kWh)</div>
+      <input type="number" class="fee-input" id="network-fee" min="0" step="0.01" value="${networkFee}" onchange="updateNetworkFee(this.value)" />
+    </div>
+    <div class="fee-row">
+      <div class="fee-row-label">Energy tax (s/kWh)</div>
+      <input type="number" class="fee-input" id="energy-tax" min="0" step="0.01" value="${energyTax}" onchange="updateEnergyTax(this.value)" />
+    </div>
+    <div class="fee-row">
+      <div class="fee-row-label">Supplier margin (s/kWh)</div>
+      <input type="number" class="fee-input" id="supplier-margin" min="0" step="0.01" value="${supplierMargin}" onchange="updateSupplierMargin(this.value)" />
+    </div>
+    <div class="fee-row">
+      <div class="fee-row-label">Include VAT (22%)</div>
+      <div class="toggle ${includeVat ? 'active' : ''}" id="vat-toggle" onclick="toggleVat()"></div>
     </div>
   </div>
 
@@ -457,6 +523,26 @@ function createSettingsWindow() {
       if (window.electronAPI && window.electronAPI.setHighPriceAlert) {
         window.electronAPI.setHighPriceAlert(enabled);
       }
+    }
+
+    function updateNetworkFee(value) {
+      if (window.electronAPI && window.electronAPI.setNetworkFee)
+        window.electronAPI.setNetworkFee(parseFloat(value) || 0);
+    }
+    function updateEnergyTax(value) {
+      if (window.electronAPI && window.electronAPI.setEnergyTax)
+        window.electronAPI.setEnergyTax(parseFloat(value) || 0);
+    }
+    function updateSupplierMargin(value) {
+      if (window.electronAPI && window.electronAPI.setSupplierMargin)
+        window.electronAPI.setSupplierMargin(parseFloat(value) || 0);
+    }
+    function toggleVat() {
+      const toggle = document.getElementById('vat-toggle');
+      const enabled = !toggle.classList.contains('active');
+      toggle.classList.toggle('active');
+      if (window.electronAPI && window.electronAPI.setIncludeVat)
+        window.electronAPI.setIncludeVat(enabled);
     }
 
     function toggleDarkMode() {
@@ -785,6 +871,30 @@ ipcMain.on('set-autostart', (event, enabled) => {
 
 // Return current dark mode state
 ipcMain.handle('get-dark-mode', () => store.get('darkMode', false));
+
+// Return fee settings
+ipcMain.handle('get-fee-settings', () => ({
+  networkFee: store.get('networkFee', 0),
+  energyTax: store.get('energyTax', 0),
+  supplierMargin: store.get('supplierMargin', 0),
+  includeVat: store.get('includeVat', false)
+}));
+
+const broadcastFeeSettings = () => {
+  if (mainWindow) {
+    mainWindow.webContents.send('fee-settings-changed', {
+      networkFee: store.get('networkFee', 0),
+      energyTax: store.get('energyTax', 0),
+      supplierMargin: store.get('supplierMargin', 0),
+      includeVat: store.get('includeVat', false)
+    });
+  }
+};
+
+ipcMain.on('set-network-fee', (event, fee) => { store.set('networkFee', fee); broadcastFeeSettings(); });
+ipcMain.on('set-energy-tax', (event, fee) => { store.set('energyTax', fee); broadcastFeeSettings(); });
+ipcMain.on('set-supplier-margin', (event, fee) => { store.set('supplierMargin', fee); broadcastFeeSettings(); });
+ipcMain.on('set-include-vat', (event, enabled) => { store.set('includeVat', enabled); broadcastFeeSettings(); });
 
 // Return current alert settings
 ipcMain.handle('get-alert-settings', () => ({

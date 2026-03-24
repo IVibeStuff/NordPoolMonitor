@@ -6,6 +6,7 @@ let isDarkMode = false;
 let lastData = null;
 let lowPriceAlertEnabled = true;
 let highPriceAlertEnabled = false;
+let feeSettings = { networkFee: 0, energyTax: 0, supplierMargin: 0, includeVat: false };
 
 // Notification state tracking
 let notificationState = {
@@ -332,7 +333,9 @@ function calculateCost(kw, durationMinutes, data) {
     const segmentMinutes = Math.min(15, remainingMinutes);
     const segmentHours = segmentMinutes / 60;
     
-    totalCost += kw * segmentHours * segment.pricePerKwh;
+    const { networkFee, energyTax, supplierMargin, includeVat } = feeSettings;
+    const effectivePrice = (segment.pricePerKwh + networkFee + energyTax + supplierMargin) * (includeVat ? 1.22 : 1);
+    totalCost += kw * segmentHours * effectivePrice;
     
     remainingMinutes -= segmentMinutes;
     currentSegmentIndex++;
@@ -771,6 +774,19 @@ async function init() {
     window.electronAPI.onAlertSettingsChange((settings) => {
       lowPriceAlertEnabled = settings.lowPriceAlert;
       highPriceAlertEnabled = settings.highPriceAlert;
+    });
+  }
+
+  // Load fee settings from electron-store
+  if (window.electronAPI && window.electronAPI.getFeeSettings) {
+    feeSettings = await window.electronAPI.getFeeSettings();
+  }
+
+  // Listen for fee setting changes from settings window
+  if (window.electronAPI && window.electronAPI.onFeeSettingsChange) {
+    window.electronAPI.onFeeSettingsChange((settings) => {
+      feeSettings = settings;
+      if (lastData) updateCalculator(lastData);
     });
   }
 
