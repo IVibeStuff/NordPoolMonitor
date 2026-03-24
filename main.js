@@ -13,12 +13,6 @@ let tray = null;
 let priceCheckInterval = null;
 let currentPriceLevel = 'moderate'; // 'low', 'moderate', 'high'
 
-// Notification state
-let notificationState = {
-  isInLowPeriod: false,
-  hasNotifiedThisPeriod: false,
-  lastNotificationTime: null
-};
 
 // Update state
 let updateState = {
@@ -210,7 +204,7 @@ function createWindow() {
   
   mainWindow = new BrowserWindow({
     width: 1400,
-    height: 1100,
+    height: 1150,
     minWidth: 1000,
     minHeight: 850,
     icon: startIcon,
@@ -847,55 +841,8 @@ async function checkPriceAlert() {
     console.warn('⚠ Tray is null, cannot update tooltip');
   }
   
-  // Notification logic
-  const isLowPrice = priceLevel === 'low';
-  
-  // Price is low and entering new low period
-  if (isLowPrice && !notificationState.isInLowPeriod) {
-    notificationState.isInLowPeriod = true;
-    notificationState.hasNotifiedThisPeriod = false;
-    console.log('→ Entered low price period');
-  }
-  
-  // Price went back up - reset
-  if (!isLowPrice && notificationState.isInLowPeriod) {
-    notificationState.isInLowPeriod = false;
-    notificationState.hasNotifiedThisPeriod = false;
-    console.log('→ Left low price period - reset notification flag');
-  }
-  
-  // Show notification
-  if (isLowPrice && notificationState.isInLowPeriod && !notificationState.hasNotifiedThisPeriod) {
-    showNotification(data);
-    notificationState.hasNotifiedThisPeriod = true;
-    notificationState.lastNotificationTime = new Date();
-  }
 }
 
-// Show native notification
-function showNotification(data) {
-  const price = data.current.pricePerKwh.toFixed(2);
-  const currency = data.currency;
-  
-  const notification = new Notification({
-    title: '⚡ Energy Price Alert',
-    body: `Price now LOW: ${price} ${currency}/kWh\nGood time to use appliances!\n(Lowest 33% today)`,
-    silent: false,
-    timeoutType: 'default',
-    icon: createIcon('low')
-  });
-  
-  notification.show();
-  
-  notification.on('click', () => {
-    if (mainWindow) {
-      mainWindow.show();
-      mainWindow.focus();
-    }
-  });
-  
-  console.log('✓ Notification sent');
-}
 
 // Start background price monitoring
 function startPriceMonitoring() {
