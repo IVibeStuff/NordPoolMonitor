@@ -384,6 +384,49 @@ function updateCalculator(data) {
   updateCustomAppliances(data);
 }
 
+// Hidden builtins — in-memory cache backed by electron-store
+let _hiddenBuiltins = [];
+
+async function initHiddenBuiltins() {
+  if (window.electronAPI && window.electronAPI.getHiddenBuiltins) {
+    _hiddenBuiltins = await window.electronAPI.getHiddenBuiltins();
+  }
+  _hiddenBuiltins.forEach(id => {
+    const el = document.getElementById(`builtin-${id}`);
+    if (el) el.style.display = 'none';
+  });
+  updateResetDefaultsBtn();
+}
+
+function saveHiddenBuiltins() {
+  if (window.electronAPI && window.electronAPI.setHiddenBuiltins) {
+    window.electronAPI.setHiddenBuiltins(_hiddenBuiltins);
+  }
+}
+
+function deleteBuiltin(id) {
+  if (!_hiddenBuiltins.includes(id)) _hiddenBuiltins.push(id);
+  saveHiddenBuiltins();
+  const el = document.getElementById(`builtin-${id}`);
+  if (el) el.style.display = 'none';
+  updateResetDefaultsBtn();
+}
+
+function resetBuiltinDefaults() {
+  _hiddenBuiltins = [];
+  saveHiddenBuiltins();
+  ['dishwasher', 'boiler', 'washer', 'gaming-pc', 'heatpump'].forEach(id => {
+    const el = document.getElementById(`builtin-${id}`);
+    if (el) el.style.display = '';
+  });
+  updateResetDefaultsBtn();
+}
+
+function updateResetDefaultsBtn() {
+  const btn = document.getElementById('reset-defaults-btn');
+  if (btn) btn.style.display = _hiddenBuiltins.length > 0 ? 'block' : 'none';
+}
+
 // Custom appliances — in-memory cache backed by electron-store
 let _customAppliances = [];
 
@@ -917,6 +960,7 @@ async function init() {
 
   setupCountrySelector();
   setupUpdateButton();
+  await initHiddenBuiltins();
   await initCustomAppliances();
   renderCustomAppliances();
   await requestNotificationPermission();

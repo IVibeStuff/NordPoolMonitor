@@ -13,7 +13,7 @@ npm run build:win
 
 # 3. Find installer
 ls dist/
-# → NordPool Monitor Setup 5.11.1.exe
+# → NordPool Monitor Setup 5.12.0.exe
 ```
 
 ## 📋 Prerequisites
@@ -63,7 +63,7 @@ After `npm run build:win`:
 
 ```
 dist/
-├── NordPool Monitor Setup 5.11.1.exe   (~80 MB installer)
+├── NordPool Monitor Setup 5.12.0.exe   (~80 MB installer)
 └── win-unpacked/                      (unpacked files)
     └── NordPool Monitor.exe           (portable exe)
 ```
@@ -164,18 +164,18 @@ Ensure you're on Windows to build Windows installer, or use GitHub Actions / CI 
 ## 🚢 Distribution
 
 ### **Option 1: Direct Download**
-1. Upload `NordPool Monitor Setup 5.11.1.exe` to file host
+1. Upload `NordPool Monitor Setup 5.12.0.exe` to file host
 2. Share download link
 3. Users run installer
 
 ### **Option 2: GitHub Releases**
 ```bash
 # Tag release
-git tag v5.11.1
+git tag v5.12.0
 git push --tags
 
 # Upload to GitHub Releases
-gh release create v5.11.1 dist/*.exe
+gh release create v5.12.0 dist/*.exe
 ```
 
 ### **Option 3: Auto-Update**
@@ -221,13 +221,13 @@ npm install --save-dev electron-builder-windows-sign
 ### **On Mac (to build Mac app):**
 ```bash
 npm run build:mac
-# → dist/NordPool Monitor-5.11.1.dmg
+# → dist/NordPool Monitor-5.12.0.dmg
 ```
 
 ### **On Linux (to build Linux app):**
 ```bash
 npm run build:linux
-# → dist/NordPool Monitor-5.11.1.AppImage
+# → dist/NordPool Monitor-5.12.0.AppImage
 ```
 
 ### **Cross-Platform Build (Advanced):**

@@ -39,6 +39,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onFeeSettingsChange: (callback) => {
     ipcRenderer.on('fee-settings-changed', (event, settings) => callback(settings));
   },
+  getHiddenBuiltins: () => ipcRenderer.invoke('get-hidden-builtins'),
+  setHiddenBuiltins: (ids) => ipcRenderer.invoke('set-hidden-builtins', ids),
   getCustomAppliances: () => ipcRenderer.invoke('get-custom-appliances'),
   setCustomAppliances: (appliances) => ipcRenderer.invoke('set-custom-appliances', appliances),
   openSettings: () => ipcRenderer.send('open-settings'),
