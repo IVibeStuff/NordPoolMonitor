@@ -837,6 +837,38 @@ function applyDarkMode(enabled) {
 }
 
 // Initialize app
+function setupUpdateButton() {
+  if (!window.electronAPI || !window.electronAPI.onUpdateStatus) return;
+  window.electronAPI.onUpdateStatus((status) => {
+    const btn = document.getElementById('update-btn');
+    if (!btn) return;
+    btn.className = 'update-btn';
+    if (status.state === 'available') {
+      btn.classList.add('available');
+      btn.style.display = 'flex';
+      btn.innerHTML = `⬇ Update v${status.version}`;
+    } else if (status.state === 'downloading') {
+      btn.classList.add('downloading');
+      btn.style.display = 'flex';
+      btn.innerHTML = `⬇ Downloading ${status.percent}%`;
+    } else if (status.state === 'downloaded') {
+      btn.classList.add('downloaded');
+      btn.style.display = 'flex';
+      btn.innerHTML = `↺ Click to Update`;
+    }
+  });
+}
+
+function handleUpdateClick() {
+  const btn = document.getElementById('update-btn');
+  if (!btn) return;
+  if (btn.classList.contains('available') && window.electronAPI) {
+    window.electronAPI.downloadUpdate();
+  } else if (btn.classList.contains('downloaded') && window.electronAPI) {
+    window.electronAPI.restartToUpdate();
+  }
+}
+
 async function init() {
   // Sync dark mode from electron-store (authoritative source)
   if (window.electronAPI && window.electronAPI.getDarkMode) {
@@ -884,6 +916,7 @@ async function init() {
   }
 
   setupCountrySelector();
+  setupUpdateButton();
   await initCustomAppliances();
   renderCustomAppliances();
   await requestNotificationPermission();

@@ -41,5 +41,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   getCustomAppliances: () => ipcRenderer.invoke('get-custom-appliances'),
   setCustomAppliances: (appliances) => ipcRenderer.invoke('set-custom-appliances', appliances),
-  openSettings: () => ipcRenderer.send('open-settings')
+  openSettings: () => ipcRenderer.send('open-settings'),
+  downloadUpdate: () => ipcRenderer.send('download-update'),
+  restartToUpdate: () => ipcRenderer.send('restart-to-update'),
+  onUpdateStatus: (callback) => {
+    ipcRenderer.on('update-status', (event, status) => callback(status));
+  }
 });

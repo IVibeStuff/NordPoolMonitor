@@ -441,6 +441,53 @@
       color: var(--text-primary);
     }
 
+    .update-btn {
+      display: none;
+      border: 1px solid #10b981;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.15s;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .update-btn.available {
+      background: transparent;
+      color: #10b981;
+    }
+
+    .update-btn.available:hover {
+      background: #10b98120;
+    }
+
+    .update-btn.downloading {
+      background: #10b981;
+      color: white;
+      border-color: #10b981;
+      animation: pulse-green 1.2s ease-in-out infinite;
+      cursor: default;
+    }
+
+    .update-btn.downloaded {
+      background: #10b981;
+      color: white;
+      border-color: #10b981;
+    }
+
+    .update-btn.downloaded:hover {
+      background: #059669;
+      border-color: #059669;
+    }
+
+    @keyframes pulse-green {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.55; }
+    }
+
     /* Responsive */
     @media (max-width: 1024px) {
       .main-grid {
@@ -489,6 +536,7 @@
         <p>Electricity market prices</p>
       </div>
       <div class="header-right">
+        <button id="update-btn" class="update-btn" onclick="handleUpdateClick()"></button>
         <div class="country-selector">
           <button class="country-btn active" data-country="ee">
             <img src="https://flagcdn.com/w20/ee.png" srcset="https://flagcdn.com/w40/ee.png 2x" width="20" height="15" alt="EE" class="flag-img">

@@ -35,8 +35,10 @@ autoUpdater.on('update-not-available', () => {
 });
 
 autoUpdater.on('download-progress', (progress) => {
-  console.log(`Download progress: ${Math.round(progress.percent)}%`);
-  if (tray) tray.setToolTip(`NordPool Monitor - Downloading update: ${Math.round(progress.percent)}%`);
+  const percent = Math.round(progress.percent);
+  console.log(`Download progress: ${percent}%`);
+  if (tray) tray.setToolTip(`NordPool Monitor - Downloading update: ${percent}%`);
+  if (mainWindow) mainWindow.webContents.send('update-status', { state: 'downloading', percent });
 });
 
 autoUpdater.on('update-available', (info) => {
@@ -44,10 +46,11 @@ autoUpdater.on('update-available', (info) => {
   updateState.version = info.version;
   console.log(`Update available: v${info.version}`);
   updateTrayMenu();
+  if (mainWindow) mainWindow.webContents.send('update-status', { state: 'available', version: info.version });
 
   new Notification({
     title: 'NordPool Monitor — Update Available',
-    body: `Version ${info.version} is available. Open the tray menu to download.`,
+    body: `Version ${info.version} is available. Click the update button in the app to download.`,
     silent: false
   }).show();
 });
@@ -56,10 +59,11 @@ autoUpdater.on('update-downloaded', () => {
   updateState.downloaded = true;
   console.log('Update downloaded, ready to install');
   updateTrayMenu();
+  if (mainWindow) mainWindow.webContents.send('update-status', { state: 'downloaded' });
 
   new Notification({
     title: 'NordPool Monitor — Update Ready',
-    body: 'Update downloaded. Click "Restart to Update" in the tray menu to install.'
+    body: 'Update downloaded and ready to install. Open the app window to apply it.'
   }).show();
 });
 
@@ -640,19 +644,6 @@ function updateTrayMenu(currentPrice = null, priceLevel = 'moderate') {
         }
       }
     },
-    { type: 'separator' },
-    ...(updateState.downloaded ? [{
-      label: '⬆ Restart to Update',
-      click: () => {
-        app.isQuitting = true;
-        autoUpdater.quitAndInstall();
-      }
-    }] : updateState.available ? [{
-      label: `⬇ Download Update (v${updateState.version})`,
-      click: () => {
-        autoUpdater.downloadUpdate();
-      }
-    }] : []),
     {
       label: 'Quit',
       click: () => {
@@ -845,6 +836,8 @@ ipcMain.on('set-include-vat', (event, enabled) => { store.set('includeVat', enab
 ipcMain.handle('get-custom-appliances', () => store.get('customAppliances', []));
 ipcMain.handle('set-custom-appliances', (_, appliances) => { store.set('customAppliances', appliances); });
 ipcMain.on('open-settings', () => { createSettingsWindow(); });
+ipcMain.on('download-update', () => { autoUpdater.downloadUpdate(); });
+ipcMain.on('restart-to-update', () => { app.isQuitting = true; autoUpdater.quitAndInstall(); });
 
 // Return current alert settings
 ipcMain.handle('get-alert-settings', () => ({
@@ -889,9 +882,10 @@ app.whenReady().then(() => {
   createTray();
   startPriceMonitoring();
 
-  // Check for updates after a short delay (only in production)
+  // Check for updates on startup and then every 24 hours (only in production)
   if (app.isPackaged) {
     setTimeout(() => autoUpdater.checkForUpdates(), 5000);
+    setInterval(() => autoUpdater.checkForUpdates(), 24 * 60 * 60 * 1000);
   }
   
   // Set auto-start if previously enabled
