@@ -40,5 +40,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('fee-settings-changed', (event, settings) => callback(settings));
   },
   getCustomAppliances: () => ipcRenderer.invoke('get-custom-appliances'),
-  setCustomAppliances: (appliances) => ipcRenderer.invoke('set-custom-appliances', appliances)
+  setCustomAppliances: (appliances) => ipcRenderer.invoke('set-custom-appliances', appliances),
+  openSettings: () => ipcRenderer.send('open-settings')
 });
