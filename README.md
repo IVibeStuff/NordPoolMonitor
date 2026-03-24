@@ -97,8 +97,9 @@ To run on Windows startup:
 - Persists across restarts
 
 ### **Notification Settings:**
-- Notifications appear when price ≤ 25th percentile
-- Cannot be disabled (core feature)
+- **Low Price Alert** — notifies when electricity price is at its lowest; toggle on/off in Settings (default: on)
+- **High Price Alert** — notifies when electricity price is at its highest; toggle on/off in Settings (default: off)
+- Each alert fires once per price period and resets when the price moves out of that range
 - Windows notification settings apply
 
 ## 📊 Technical Details
