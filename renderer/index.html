@@ -319,6 +319,24 @@
       color: var(--text-primary);
     }
 
+    .btn-reset-defaults {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 4px 0;
+      width: 100%;
+      text-align: center;
+      opacity: 0.6;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-reset-defaults:hover {
+      opacity: 1;
+      color: var(--text-primary);
+    }
+
     /* Footer */
     .footer {
       text-align: center;
@@ -625,30 +643,45 @@
         <div class="card">
           <div class="card-title">Cost Calculator with Taxes</div>
           <div id="calculator-content">
-            <div class="calc-item">
+            <div class="calc-item" id="builtin-dishwasher">
               <div class="calc-label">Dishwasher (1500W, 60 min)</div>
-              <div class="calc-cost" id="calc-dishwasher">--</div>
-            </div>
-            <div class="calc-item">
-              <div class="calc-label">Water heater (2000W, 60-90 min)</div>
-              <div class="calc-cost">
-                <span id="calc-boiler-40">--</span> - 
-                <span id="calc-boiler-60">--</span>
+              <div class="calc-cost-row">
+                <div class="calc-cost" id="calc-dishwasher">--</div>
+                <button class="calc-delete-btn" onclick="deleteBuiltin('dishwasher')" title="Remove">×</button>
               </div>
             </div>
-            <div class="calc-item">
+            <div class="calc-item" id="builtin-boiler">
+              <div class="calc-label">Water heater (2000W, 60-90 min)</div>
+              <div class="calc-cost-row">
+                <div class="calc-cost">
+                  <span id="calc-boiler-40">--</span> -
+                  <span id="calc-boiler-60">--</span>
+                </div>
+                <button class="calc-delete-btn" onclick="deleteBuiltin('boiler')" title="Remove">×</button>
+              </div>
+            </div>
+            <div class="calc-item" id="builtin-washer">
               <div class="calc-label">Washing machine (500W, 60 min)</div>
-              <div class="calc-cost" id="calc-washer">--</div>
+              <div class="calc-cost-row">
+                <div class="calc-cost" id="calc-washer">--</div>
+                <button class="calc-delete-btn" onclick="deleteBuiltin('washer')" title="Remove">×</button>
+              </div>
             </div>
-            <div class="calc-item">
+            <div class="calc-item" id="builtin-gaming-pc">
               <div class="calc-label">Gaming PC (750W, 60 min)</div>
-              <div class="calc-cost" id="calc-gaming-pc">--</div>
+              <div class="calc-cost-row">
+                <div class="calc-cost" id="calc-gaming-pc">--</div>
+                <button class="calc-delete-btn" onclick="deleteBuiltin('gaming-pc')" title="Remove">×</button>
+              </div>
             </div>
-            <div class="calc-item">
+            <div class="calc-item" id="builtin-heatpump">
               <div class="calc-label">Heat pump (2.5-4.0kW, 60 min)</div>
-              <div class="calc-cost">
-                <span id="calc-heatpump-25">--</span> - 
-                <span id="calc-heatpump-40">--</span>
+              <div class="calc-cost-row">
+                <div class="calc-cost">
+                  <span id="calc-heatpump-25">--</span> -
+                  <span id="calc-heatpump-40">--</span>
+                </div>
+                <button class="calc-delete-btn" onclick="deleteBuiltin('heatpump')" title="Remove">×</button>
               </div>
             </div>
             <div id="custom-appliances"></div>
@@ -662,6 +695,7 @@
               </div>
             </div>
             <button class="btn-add-appliance" id="add-appliance-btn" onclick="showAddApplianceForm()">+ Add appliance</button>
+            <button class="btn-reset-defaults" id="reset-defaults-btn" onclick="resetBuiltinDefaults()" style="display:none;">Restore defaults</button>
           </div>
         </div>
       </div>

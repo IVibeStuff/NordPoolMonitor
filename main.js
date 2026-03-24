@@ -838,6 +838,8 @@ ipcMain.handle('set-custom-appliances', (_, appliances) => { store.set('customAp
 ipcMain.on('open-settings', () => { createSettingsWindow(); });
 ipcMain.on('download-update', () => { autoUpdater.downloadUpdate(); });
 ipcMain.on('restart-to-update', () => { app.isQuitting = true; autoUpdater.quitAndInstall(); });
+ipcMain.handle('get-hidden-builtins', () => store.get('hiddenBuiltins', []));
+ipcMain.handle('set-hidden-builtins', (_, ids) => { store.set('hiddenBuiltins', ids); });
 
 // Return current alert settings
 ipcMain.handle('get-alert-settings', () => ({
