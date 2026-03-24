@@ -29,9 +29,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('alert-settings-changed', (event, settings) => callback(settings));
   },
   getFeeSettings: () => ipcRenderer.invoke('get-fee-settings'),
-  setNetworkFee: (fee) => ipcRenderer.send('set-network-fee', fee),
+  setNetworkFeeDay: (fee) => ipcRenderer.send('set-network-fee-day', fee),
+  setNetworkFeeNight: (fee) => ipcRenderer.send('set-network-fee-night', fee),
   setEnergyTax: (fee) => ipcRenderer.send('set-energy-tax', fee),
   setSupplierMargin: (fee) => ipcRenderer.send('set-supplier-margin', fee),
+  setRenewableFee: (fee) => ipcRenderer.send('set-renewable-fee', fee),
+  setBalancingFee: (fee) => ipcRenderer.send('set-balancing-fee', fee),
   setIncludeVat: (enabled) => ipcRenderer.send('set-include-vat', enabled),
   onFeeSettingsChange: (callback) => {
     ipcRenderer.on('fee-settings-changed', (event, settings) => callback(settings));

@@ -258,7 +258,7 @@ function createSettingsWindow() {
 
   settingsWindow = new BrowserWindow({
     width: 500,
-    height: 720,
+    height: 980,
     resizable: false,
     parent: mainWindow,
     modal: true,
@@ -279,9 +279,12 @@ function createSettingsWindow() {
   const autoStartEnabled = store.get('autostart', false);
   const lowPriceAlertEnabled = store.get('lowPriceAlert', true);
   const highPriceAlertEnabled = store.get('highPriceAlert', false);
-  const networkFee = store.get('networkFee', 0);
+  const networkFeeDay = store.get('networkFeeDay', 0);
+  const networkFeeNight = store.get('networkFeeNight', 0);
   const energyTax = store.get('energyTax', 0);
   const supplierMargin = store.get('supplierMargin', 0);
+  const renewableFee = store.get('renewableFee', 0);
+  const balancingFee = store.get('balancingFee', 0);
   const includeVat = store.get('includeVat', false);
   const settingsHTML = `
 <!DOCTYPE html>
@@ -389,7 +392,7 @@ function createSettingsWindow() {
       background: #57534e;
     }
     .fee-input {
-      width: 80px;
+      width: 110px;
       padding: 6px 8px;
       border: 1px solid #e7e5e4;
       border-radius: 8px;
@@ -398,6 +401,11 @@ function createSettingsWindow() {
       background: #f5f5f4;
       color: #292524;
       flex-shrink: 0;
+    }
+    .fee-input::-webkit-inner-spin-button,
+    .fee-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
     body.dark .fee-input {
       background: #1c1917;
@@ -468,19 +476,31 @@ function createSettingsWindow() {
     <div class="fee-group-title">Electricity Fees</div>
     <div class="fee-group-desc">Added to spot price in the Cost Calculator</div>
     <div class="fee-row">
-      <div class="fee-row-label">Network fee (s/kWh)</div>
-      <input type="number" class="fee-input" id="network-fee" min="0" step="0.01" value="${networkFee}" onchange="updateNetworkFee(this.value)" />
+      <div class="fee-row-label">Network fee - day 07:00–22:00 (s/kWh)</div>
+      <input type="text" class="fee-input" id="network-fee-day" min="0" step="0.01" value="${networkFeeDay}" onfocus="feeInputFocus(this)" onblur="feeInputBlur(this, updateNetworkFeeDay)" onchange="updateNetworkFeeDay(this.value)" />
+    </div>
+    <div class="fee-row">
+      <div class="fee-row-label">Network fee - night 22:00–07:00 (s/kWh)</div>
+      <input type="text" class="fee-input" id="network-fee-night" min="0" step="0.01" value="${networkFeeNight}" onfocus="feeInputFocus(this)" onblur="feeInputBlur(this, updateNetworkFeeNight)" onchange="updateNetworkFeeNight(this.value)" />
     </div>
     <div class="fee-row">
       <div class="fee-row-label">Energy tax (s/kWh)</div>
-      <input type="number" class="fee-input" id="energy-tax" min="0" step="0.01" value="${energyTax}" onchange="updateEnergyTax(this.value)" />
+      <input type="text" class="fee-input" id="energy-tax" min="0" step="0.01" value="${energyTax}" onfocus="feeInputFocus(this)" onblur="feeInputBlur(this, updateEnergyTax)" onchange="updateEnergyTax(this.value)" />
     </div>
     <div class="fee-row">
-      <div class="fee-row-label">Supplier margin (s/kWh)</div>
-      <input type="number" class="fee-input" id="supplier-margin" min="0" step="0.01" value="${supplierMargin}" onchange="updateSupplierMargin(this.value)" />
+      <div class="fee-row-label">Security of supply fee (s/kWh)</div>
+      <input type="text" class="fee-input" id="supplier-margin" min="0" step="0.01" value="${supplierMargin}" onfocus="feeInputFocus(this)" onblur="feeInputBlur(this, updateSupplierMargin)" onchange="updateSupplierMargin(this.value)" />
     </div>
     <div class="fee-row">
-      <div class="fee-row-label">Include VAT (22%)</div>
+      <div class="fee-row-label">Renewable energy fee (s/kWh)</div>
+      <input type="text" class="fee-input" id="renewable-fee" min="0" step="0.01" value="${renewableFee}" onfocus="feeInputFocus(this)" onblur="feeInputBlur(this, updateRenewableFee)" onchange="updateRenewableFee(this.value)" />
+    </div>
+    <div class="fee-row">
+      <div class="fee-row-label">Balancing capacity fee (s/kWh)</div>
+      <input type="text" class="fee-input" id="balancing-fee" min="0" step="0.01" value="${balancingFee}" onfocus="feeInputFocus(this)" onblur="feeInputBlur(this, updateBalancingFee)" onchange="updateBalancingFee(this.value)" />
+    </div>
+    <div class="fee-row">
+      <div class="fee-row-label">Include VAT (24%)</div>
       <div class="toggle ${includeVat ? 'active' : ''}" id="vat-toggle" onclick="toggleVat()"></div>
     </div>
   </div>
@@ -525,17 +545,46 @@ function createSettingsWindow() {
       }
     }
 
-    function updateNetworkFee(value) {
-      if (window.electronAPI && window.electronAPI.setNetworkFee)
-        window.electronAPI.setNetworkFee(parseFloat(value) || 0);
+    function parseFee(value) {
+      return parseFloat(String(value).replace(',', '.')) || 0;
+    }
+    function feeInputFocus(el) {
+      if (el.value === '0') el.value = '';
+    }
+    function feeInputBlur(el, updateFn) {
+      if (el.value === '') {
+        el.value = '0';
+        updateFn('0');
+      } else {
+        const normalized = String(el.value).replace(',', '.');
+        el.value = normalized;
+        updateFn(normalized);
+      }
+    }
+
+    function updateNetworkFeeDay(value) {
+      if (window.electronAPI && window.electronAPI.setNetworkFeeDay)
+        window.electronAPI.setNetworkFeeDay(parseFee(value));
+    }
+    function updateNetworkFeeNight(value) {
+      if (window.electronAPI && window.electronAPI.setNetworkFeeNight)
+        window.electronAPI.setNetworkFeeNight(parseFee(value));
     }
     function updateEnergyTax(value) {
       if (window.electronAPI && window.electronAPI.setEnergyTax)
-        window.electronAPI.setEnergyTax(parseFloat(value) || 0);
+        window.electronAPI.setEnergyTax(parseFee(value));
     }
     function updateSupplierMargin(value) {
       if (window.electronAPI && window.electronAPI.setSupplierMargin)
-        window.electronAPI.setSupplierMargin(parseFloat(value) || 0);
+        window.electronAPI.setSupplierMargin(parseFee(value));
+    }
+    function updateRenewableFee(value) {
+      if (window.electronAPI && window.electronAPI.setRenewableFee)
+        window.electronAPI.setRenewableFee(parseFee(value));
+    }
+    function updateBalancingFee(value) {
+      if (window.electronAPI && window.electronAPI.setBalancingFee)
+        window.electronAPI.setBalancingFee(parseFee(value));
     }
     function toggleVat() {
       const toggle = document.getElementById('vat-toggle');
@@ -874,26 +923,35 @@ ipcMain.handle('get-dark-mode', () => store.get('darkMode', false));
 
 // Return fee settings
 ipcMain.handle('get-fee-settings', () => ({
-  networkFee: store.get('networkFee', 0),
+  networkFeeDay: store.get('networkFeeDay', 0),
+  networkFeeNight: store.get('networkFeeNight', 0),
   energyTax: store.get('energyTax', 0),
   supplierMargin: store.get('supplierMargin', 0),
+  renewableFee: store.get('renewableFee', 0),
+  balancingFee: store.get('balancingFee', 0),
   includeVat: store.get('includeVat', false)
 }));
 
 const broadcastFeeSettings = () => {
   if (mainWindow) {
     mainWindow.webContents.send('fee-settings-changed', {
-      networkFee: store.get('networkFee', 0),
+      networkFeeDay: store.get('networkFeeDay', 0),
+      networkFeeNight: store.get('networkFeeNight', 0),
       energyTax: store.get('energyTax', 0),
       supplierMargin: store.get('supplierMargin', 0),
+      renewableFee: store.get('renewableFee', 0),
+      balancingFee: store.get('balancingFee', 0),
       includeVat: store.get('includeVat', false)
     });
   }
 };
 
-ipcMain.on('set-network-fee', (event, fee) => { store.set('networkFee', fee); broadcastFeeSettings(); });
+ipcMain.on('set-network-fee-day', (event, fee) => { store.set('networkFeeDay', fee); broadcastFeeSettings(); });
+ipcMain.on('set-network-fee-night', (event, fee) => { store.set('networkFeeNight', fee); broadcastFeeSettings(); });
 ipcMain.on('set-energy-tax', (event, fee) => { store.set('energyTax', fee); broadcastFeeSettings(); });
 ipcMain.on('set-supplier-margin', (event, fee) => { store.set('supplierMargin', fee); broadcastFeeSettings(); });
+ipcMain.on('set-renewable-fee', (event, fee) => { store.set('renewableFee', fee); broadcastFeeSettings(); });
+ipcMain.on('set-balancing-fee', (event, fee) => { store.set('balancingFee', fee); broadcastFeeSettings(); });
 ipcMain.on('set-include-vat', (event, enabled) => { store.set('includeVat', enabled); broadcastFeeSettings(); });
 
 // Return current alert settings

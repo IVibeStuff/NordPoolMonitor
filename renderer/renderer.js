@@ -6,7 +6,7 @@ let isDarkMode = false;
 let lastData = null;
 let lowPriceAlertEnabled = true;
 let highPriceAlertEnabled = false;
-let feeSettings = { networkFee: 0, energyTax: 0, supplierMargin: 0, includeVat: false };
+let feeSettings = { networkFeeDay: 0, networkFeeNight: 0, energyTax: 0, supplierMargin: 0, renewableFee: 0, balancingFee: 0, includeVat: false };
 
 // Notification state tracking
 let notificationState = {
@@ -333,8 +333,10 @@ function calculateCost(kw, durationMinutes, data) {
     const segmentMinutes = Math.min(15, remainingMinutes);
     const segmentHours = segmentMinutes / 60;
     
-    const { networkFee, energyTax, supplierMargin, includeVat } = feeSettings;
-    const effectivePrice = (segment.pricePerKwh + networkFee + energyTax + supplierMargin) * (includeVat ? 1.22 : 1);
+    const { networkFeeDay, networkFeeNight, energyTax, supplierMargin, renewableFee, balancingFee, includeVat } = feeSettings;
+    const hour = segment.timestamp.getHours();
+    const networkFee = (hour >= 7 && hour < 22) ? networkFeeDay : networkFeeNight;
+    const effectivePrice = (segment.pricePerKwh + networkFee + energyTax + supplierMargin + renewableFee + balancingFee) * (includeVat ? 1.24 : 1);
     totalCost += kw * segmentHours * effectivePrice;
     
     remainingMinutes -= segmentMinutes;
