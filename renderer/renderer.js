@@ -4,12 +4,16 @@ let priceChart = null;
 let currentCountry = 'ee'; // Default country
 let isDarkMode = false;
 let lastData = null;
+let lowPriceAlertEnabled = true;
+let highPriceAlertEnabled = false;
 
 // Notification state tracking
 let notificationState = {
   isInLowPeriod: false,
   hasNotifiedThisPeriod: false,
-  lastNotificationTime: null
+  lastNotificationTime: null,
+  isInHighPeriod: false,
+  hasNotifiedThisHighPeriod: false
 };
 
 // Request notification permission on load
@@ -27,49 +31,54 @@ async function requestNotificationPermission() {
   }
 }
 
-// Check if price is in lowest 1/3 and show notification
+// Check price thresholds and show notifications based on user preferences
 function checkPriceAlert(data) {
   if (!data.current || !data.stats) return;
-  
+
   const currentPrice = data.current.pricePerKwh;
-  const threshold = data.stats.q1; // 25th percentile (lowest quartile)
-  const isLowPrice = currentPrice <= threshold;
-  
-  console.log(`=== PRICE ALERT CHECK ===`);
-  console.log(`Current price: ${currentPrice.toFixed(2)} ${data.currency}/kWh`);
-  console.log(`Threshold (Q1): ${threshold.toFixed(2)} ${data.currency}/kWh`);
-  console.log(`Is low price: ${isLowPrice}`);
-  console.log(`Was in low period: ${notificationState.isInLowPeriod}`);
-  console.log(`Already notified: ${notificationState.hasNotifiedThisPeriod}`);
-  
-  // Price is low and we're entering a new low period
-  if (isLowPrice && !notificationState.isInLowPeriod) {
-    notificationState.isInLowPeriod = true;
-    notificationState.hasNotifiedThisPeriod = false;
-    console.log('→ Entered low price period');
+
+  // Low price alert
+  if (lowPriceAlertEnabled) {
+    const lowThreshold = data.stats.q1;
+    const isLowPrice = currentPrice <= lowThreshold;
+
+    if (isLowPrice && !notificationState.isInLowPeriod) {
+      notificationState.isInLowPeriod = true;
+      notificationState.hasNotifiedThisPeriod = false;
+    }
+    if (!isLowPrice && notificationState.isInLowPeriod) {
+      notificationState.isInLowPeriod = false;
+      notificationState.hasNotifiedThisPeriod = false;
+    }
+    if (isLowPrice && notificationState.isInLowPeriod && !notificationState.hasNotifiedThisPeriod) {
+      showLowPriceNotification(data);
+      notificationState.hasNotifiedThisPeriod = true;
+      notificationState.lastNotificationTime = new Date();
+    }
   }
-  
-  // Price went back up - reset notification flag
-  if (!isLowPrice && notificationState.isInLowPeriod) {
-    notificationState.isInLowPeriod = false;
-    notificationState.hasNotifiedThisPeriod = false;
-    console.log('→ Left low price period - reset notification flag');
-  }
-  
-  // Show notification if:
-  // 1. Price is low
-  // 2. We're in a low period
-  // 3. Haven't notified for this low period yet
-  if (isLowPrice && notificationState.isInLowPeriod && !notificationState.hasNotifiedThisPeriod) {
-    showPriceNotification(data);
-    notificationState.hasNotifiedThisPeriod = true;
-    notificationState.lastNotificationTime = new Date();
-    console.log('→ Notification sent!');
+
+  // High price alert
+  if (highPriceAlertEnabled) {
+    const highThreshold = data.stats.q3;
+    const isHighPrice = currentPrice >= highThreshold;
+
+    if (isHighPrice && !notificationState.isInHighPeriod) {
+      notificationState.isInHighPeriod = true;
+      notificationState.hasNotifiedThisHighPeriod = false;
+    }
+    if (!isHighPrice && notificationState.isInHighPeriod) {
+      notificationState.isInHighPeriod = false;
+      notificationState.hasNotifiedThisHighPeriod = false;
+    }
+    if (isHighPrice && notificationState.isInHighPeriod && !notificationState.hasNotifiedThisHighPeriod) {
+      showHighPriceNotification(data);
+      notificationState.hasNotifiedThisHighPeriod = true;
+    }
   }
 }
 
-// Show notification
-function showPriceNotification(data) {
+// Show low price notification
+function showLowPriceNotification(data) {
   const price = data.current.pricePerKwh.toFixed(2);
   const currency = data.currency;
   
@@ -109,6 +118,34 @@ function showPriceNotification(data) {
     console.warn('Notifications are blocked. Enable in browser settings.');
   } else {
     console.warn('Notification permission not granted');
+  }
+}
+
+// Show high price notification
+function showHighPriceNotification(data) {
+  const price = data.current.pricePerKwh.toFixed(2);
+  const currency = data.currency;
+
+  const banner = document.getElementById('notification-banner');
+  banner.textContent = `Heads up: price is HIGH right now (${price} ${currency}/kWh)`;
+  banner.classList.remove('hidden');
+  setTimeout(() => {
+    banner.classList.add('hidden');
+  }, 10000);
+
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const notification = new Notification('⚡ Energy Price Alert', {
+      body: `Price now HIGH: ${price} ${currency}/kWh\nConsider postponing high-energy tasks.`,
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">⚡</text></svg>',
+      tag: 'price-alert-high',
+      requireInteraction: false,
+      silent: false
+    });
+    setTimeout(() => notification.close(), 8000);
+    notification.onclick = function() {
+      window.focus();
+      notification.close();
+    };
   }
 }
 
@@ -719,6 +756,21 @@ async function init() {
       isDarkMode = enabled;
       applyDarkMode(enabled);
       if (lastData) updateChart(lastData);
+    });
+  }
+
+  // Load alert preferences from electron-store
+  if (window.electronAPI && window.electronAPI.getAlertSettings) {
+    const alertSettings = await window.electronAPI.getAlertSettings();
+    lowPriceAlertEnabled = alertSettings.lowPriceAlert;
+    highPriceAlertEnabled = alertSettings.highPriceAlert;
+  }
+
+  // Listen for alert setting changes from settings window
+  if (window.electronAPI && window.electronAPI.onAlertSettingsChange) {
+    window.electronAPI.onAlertSettingsChange((settings) => {
+      lowPriceAlertEnabled = settings.lowPriceAlert;
+      highPriceAlertEnabled = settings.highPriceAlert;
     });
   }
 
