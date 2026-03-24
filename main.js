@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Tray, Menu, nativeImage, Notification, ipcMain, shell } = require('electron');
 const path = require('path');
+const zlib = require('zlib');
 const Store = require('electron-store');
 const axios = require('axios');
 const { autoUpdater } = require('electron-updater');
@@ -71,136 +72,86 @@ autoUpdater.on('error', (err) => {
   }).show();
 });
 
-// Create colored icon using raw pixel data (most reliable on Windows)
+// Encode raw RGBA buffer as a valid PNG using zlib
+function rgbaToPNG(rgba, width, height) {
+  const crcTable = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    crcTable[i] = c;
+  }
+  function crc32(buf) {
+    let crc = 0xFFFFFFFF;
+    for (const byte of buf) crc = crcTable[(crc ^ byte) & 0xFF] ^ (crc >>> 8);
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+  function chunk(type, data) {
+    const t = Buffer.from(type);
+    const lenBuf = Buffer.alloc(4); lenBuf.writeUInt32BE(data.length);
+    const crcBuf = Buffer.alloc(4); crcBuf.writeUInt32BE(crc32(Buffer.concat([t, data])));
+    return Buffer.concat([lenBuf, t, data, crcBuf]);
+  }
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0); ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8; ihdr[9] = 6; // 8-bit RGBA
+  const raw = Buffer.alloc(height * (1 + width * 4));
+  for (let y = 0; y < height; y++) {
+    raw[y * (1 + width * 4)] = 0; // filter: none
+    rgba.copy(raw, y * (1 + width * 4) + 1, y * width * 4, (y + 1) * width * 4);
+  }
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', zlib.deflateSync(raw)),
+    chunk('IEND', Buffer.alloc(0))
+  ]);
+}
+
+// Create colored icon with lightning bolt
 function createColoredIconPNG(colorHex) {
-  // Convert hex to RGB
   const r = parseInt(colorHex.slice(1, 3), 16);
   const g = parseInt(colorHex.slice(3, 5), 16);
   const b = parseInt(colorHex.slice(5, 7), 16);
-  
-  // Create 32x32 PNG manually
   const size = 32;
-  const buffer = Buffer.alloc(size * size * 4);
-  
-  // Simple circle with lightning effect
+  const rgba = Buffer.alloc(size * size * 4);
+
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const dx = x - size / 2;
       const dy = y - size / 2;
       const distance = Math.sqrt(dx * dx + dy * dy);
       const idx = (y * size + x) * 4;
-      
-      // Draw circle
       if (distance < size / 2 - 1) {
-        buffer[idx] = r;     // R
-        buffer[idx + 1] = g; // G
-        buffer[idx + 2] = b; // B
-        buffer[idx + 3] = 255; // A
-        
-        // Lightning bolt pattern (simple white pixels in center)
-        const isLightning = 
+        rgba[idx] = r; rgba[idx + 1] = g; rgba[idx + 2] = b; rgba[idx + 3] = 255;
+        const isLightning =
           (x >= size / 2 - 2 && x <= size / 2 + 2 && y >= size / 4 && y <= 3 * size / 4) ||
           (x >= size / 2 - 4 && x <= size / 2 && y >= size / 2 - 2 && y <= size / 2 + 2) ||
           (x >= size / 2 && x <= size / 2 + 4 && y >= size / 2 + 2 && y <= size / 2 + 6);
-        
-        if (isLightning) {
-          buffer[idx] = 255;     // White
-          buffer[idx + 1] = 255;
-          buffer[idx + 2] = 255;
-        }
+        if (isLightning) { rgba[idx] = 255; rgba[idx + 1] = 255; rgba[idx + 2] = 255; }
       } else {
-        // Transparent outside circle
-        buffer[idx] = 0;
-        buffer[idx + 1] = 0;
-        buffer[idx + 2] = 0;
-        buffer[idx + 3] = 0;
+        rgba[idx + 3] = 0; // transparent
       }
     }
   }
-  
-  return nativeImage.createFromBuffer(buffer, {
-    width: size,
-    height: size
-  });
+
+  return nativeImage.createFromBuffer(rgbaToPNG(rgba, size, size));
 }
 
-// Get icon color based on price level
-function getIconColor(priceLevel) {
-  switch(priceLevel) {
-    case 'low': return '#10b981';      // Green
-    case 'high': return '#ef4444';     // Red  
-    default: return '#f59e0b';         // Yellow (moderate)
-  }
+// Load the app icon from build/icon.ico
+function createIcon() {
+  return nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.ico'));
 }
 
-// Create icon with current price level - ALWAYS use dynamic colored icons
-function createIcon(priceLevel) {
-  const color = getIconColor(priceLevel);
-  console.log(`Creating DYNAMIC colored icon: ${color} for level: ${priceLevel}`);
-  
-  // ALWAYS create dynamic colored icon - never use static file
-  return createColoredIconPNG(color);
-}
-
-// Update tray icon with current price level
-function updateTrayIcon(priceLevel) {
-  if (!tray) {
-    console.warn('⚠ Tray is null, cannot update icon');
-    return;
-  }
-  
-  try {
-    const icon = createIcon(priceLevel);
-    const resized = icon.resize({ width: 16, height: 16 });
-    tray.setImage(resized);
-    console.log(`✓ Tray icon updated to ${priceLevel}`);
-  } catch (error) {
-    console.error('❌ Failed to update tray icon:', error.message);
-  }
-}
-
-// Update window icon
-function updateWindowIcon(priceLevel) {
-  if (!mainWindow) {
-    console.warn('⚠ Window is null, cannot update icon');
-    return;
-  }
-  
-  try {
-    const icon = createIcon(priceLevel);
-    mainWindow.setIcon(icon);
-    console.log(`✓ Window icon updated to ${priceLevel}`);
-    
-    // Try to set taskbar overlay on Windows
-    if (process.platform === 'win32') {
-      try {
-        const overlayIcon = icon.resize({ width: 16, height: 16 });
-        const description = `${priceLevel} price`;
-        mainWindow.setOverlayIcon(overlayIcon, description);
-        console.log(`✓ Taskbar overlay updated to ${priceLevel}`);
-      } catch (overlayError) {
-        console.warn('⚠ Could not set taskbar overlay:', overlayError.message);
-      }
-    }
-  } catch (error) {
-    console.error('❌ Failed to update window icon:', error.message);
-  }
-}
-
-// Update all icons
+// Update all icons (price level tracked for future use)
 function updateAllIcons(priceLevel) {
-  console.log(`\n=== UPDATING ALL ICONS TO: ${priceLevel} ===`);
   currentPriceLevel = priceLevel;
-  updateTrayIcon(priceLevel);
-  updateWindowIcon(priceLevel);
-  console.log(`=== ICON UPDATE COMPLETE ===\n`);
 }
 
 // Create main window
 function createWindow() {
   console.log('Creating main window...');
-  
-  const startIcon = createIcon('moderate'); // Yellow by default
+
+  const startIcon = createIcon();
   
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -622,16 +573,8 @@ function createTray() {
   console.log('\n=== CREATING SYSTEM TRAY ===');
   
   try {
-    // Create icon
-    const icon = createIcon('moderate');
-    console.log('Icon created, size:', icon.getSize());
-    
-    // Resize for tray (16x16 is standard for Windows)
-    const trayIcon = icon.resize({ width: 16, height: 16 });
-    console.log('Icon resized for tray:', trayIcon.getSize());
-    
     // Create tray
-    tray = new Tray(trayIcon);
+    tray = new Tray(createIcon());
     console.log('✓ Tray object created');
     
     // Set tooltip immediately
@@ -900,6 +843,9 @@ ipcMain.on('set-supplier-margin', (event, fee) => { store.set('supplierMargin', 
 ipcMain.on('set-renewable-fee', (event, fee) => { store.set('renewableFee', fee); broadcastFeeSettings(); });
 ipcMain.on('set-balancing-fee', (event, fee) => { store.set('balancingFee', fee); broadcastFeeSettings(); });
 ipcMain.on('set-include-vat', (event, enabled) => { store.set('includeVat', enabled); broadcastFeeSettings(); });
+
+ipcMain.handle('get-custom-appliances', () => store.get('customAppliances', []));
+ipcMain.handle('set-custom-appliances', (_, appliances) => { store.set('customAppliances', appliances); });
 
 // Return current alert settings
 ipcMain.handle('get-alert-settings', () => ({

@@ -271,7 +271,14 @@
       background: var(--bg-secondary);
       color: var(--text-primary);
     }
+    #custom-appliances .calc-item:first-child { padding-top: 16px; }
+    #custom-appliances .calc-item { border-bottom: 1px solid var(--bg-secondary); }
     .add-appliance-form input::placeholder { color: var(--text-secondary); }
+    .add-appliance-form input::-webkit-inner-spin-button,
+    .add-appliance-form input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
     .add-appliance-btn-row {
       display: flex;
       gap: 8px;
@@ -514,7 +521,7 @@
         <!-- Chart -->
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <div class="card-title" style="margin-bottom:0;">48-Hour Price Window</div>
+            <div class="card-title" style="margin-bottom:0;">48-Hour Market Price Window</div>
             <button class="reset-zoom-btn" id="reset-zoom-btn" onclick="resetChartZoom()" style="display:none;">Reset Zoom</button>
           </div>
           <div class="chart-container">
@@ -545,35 +552,35 @@
 
         <!-- Cost Calculator -->
         <div class="card">
-          <div class="card-title">Cost Calculator (Next 60 Minutes)</div>
+          <div class="card-title">Cost Calculator with Taxes</div>
           <div id="calculator-content">
-            <div id="custom-appliances"></div>
             <div class="calc-item">
-              <div class="calc-label">Dishwasher (1500W)</div>
+              <div class="calc-label">Dishwasher (1500W, 60 min)</div>
               <div class="calc-cost" id="calc-dishwasher">--</div>
             </div>
             <div class="calc-item">
-              <div class="calc-label">Water heater (2000W, 40-60L)</div>
+              <div class="calc-label">Water heater (2000W, 60-90 min)</div>
               <div class="calc-cost">
                 <span id="calc-boiler-40">--</span> - 
                 <span id="calc-boiler-60">--</span>
               </div>
             </div>
             <div class="calc-item">
-              <div class="calc-label">Washing machine (500W)</div>
+              <div class="calc-label">Washing machine (500W, 60 min)</div>
               <div class="calc-cost" id="calc-washer">--</div>
             </div>
             <div class="calc-item">
-              <div class="calc-label">Gaming PC (750W)</div>
+              <div class="calc-label">Gaming PC (750W, 60 min)</div>
               <div class="calc-cost" id="calc-gaming-pc">--</div>
             </div>
             <div class="calc-item">
-              <div class="calc-label">Heat pump (2.5-4.0kW)</div>
+              <div class="calc-label">Heat pump (2.5-4.0kW, 60 min)</div>
               <div class="calc-cost">
                 <span id="calc-heatpump-25">--</span> - 
                 <span id="calc-heatpump-40">--</span>
               </div>
             </div>
+            <div id="custom-appliances"></div>
             <div id="add-appliance-form" class="add-appliance-form" style="display:none;">
               <input type="text" id="new-appliance-name" placeholder="Name" maxlength="30" />
               <input type="number" id="new-appliance-watts" placeholder="Watts" min="1" max="99999" />

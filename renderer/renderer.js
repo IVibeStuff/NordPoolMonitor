@@ -346,6 +346,11 @@ function calculateCost(kw, durationMinutes, data) {
   return totalCost;
 }
 
+function formatCost(cost, currency) {
+  if (cost >= 100) return `${(cost / 100).toFixed(2)}€`;
+  return `${cost.toFixed(2)}${currency}`;
+}
+
 // Update calculator
 function updateCalculator(data) {
   if (!data.current) return;
@@ -369,27 +374,34 @@ function updateCalculator(data) {
 
   // Update display (costs are already in cents/senti - don't multiply by 100!)
   const suffix = data.currency;
-  document.getElementById('calc-dishwasher').textContent = `${dishwasherCost.toFixed(2)}${suffix}`;
-  document.getElementById('calc-boiler-40').textContent = `${boiler40Cost.toFixed(2)}${suffix}`;
-  document.getElementById('calc-boiler-60').textContent = `${boiler60Cost.toFixed(2)}${suffix}`;
-  document.getElementById('calc-washer').textContent = `${washerCost.toFixed(2)}${suffix}`;
-  document.getElementById('calc-heatpump-25').textContent = `${heatpump25Cost.toFixed(2)}${suffix}`;
-  document.getElementById('calc-heatpump-40').textContent = `${heatpump40Cost.toFixed(2)}${suffix}`;
-  document.getElementById('calc-gaming-pc').textContent = `${gamingPCCost.toFixed(2)}${suffix}`;
+  document.getElementById('calc-dishwasher').textContent = formatCost(dishwasherCost, suffix);
+  document.getElementById('calc-boiler-40').textContent = formatCost(boiler40Cost, suffix);
+  document.getElementById('calc-boiler-60').textContent = formatCost(boiler60Cost, suffix);
+  document.getElementById('calc-washer').textContent = formatCost(washerCost, suffix);
+  document.getElementById('calc-heatpump-25').textContent = formatCost(heatpump25Cost, suffix);
+  document.getElementById('calc-heatpump-40').textContent = formatCost(heatpump40Cost, suffix);
+  document.getElementById('calc-gaming-pc').textContent = formatCost(gamingPCCost, suffix);
   updateCustomAppliances(data);
 }
 
-// Custom appliances — stored in localStorage
-function loadCustomAppliances() {
-  try {
-    return JSON.parse(localStorage.getItem('nordpool-custom-appliances') || '[]');
-  } catch {
-    return [];
+// Custom appliances — in-memory cache backed by electron-store
+let _customAppliances = [];
+
+async function initCustomAppliances() {
+  if (window.electronAPI && window.electronAPI.getCustomAppliances) {
+    _customAppliances = await window.electronAPI.getCustomAppliances();
   }
 }
 
+function loadCustomAppliances() {
+  return _customAppliances;
+}
+
 function saveCustomAppliances(appliances) {
-  localStorage.setItem('nordpool-custom-appliances', JSON.stringify(appliances));
+  _customAppliances = appliances;
+  if (window.electronAPI && window.electronAPI.setCustomAppliances) {
+    window.electronAPI.setCustomAppliances(appliances);
+  }
 }
 
 function renderCustomAppliances() {
@@ -417,7 +429,7 @@ function updateCustomAppliances(data) {
     const el = document.getElementById(`calc-custom-${a.id}`);
     if (el) {
       const cost = calculateCost(a.watts / 1000, a.durationMinutes, data);
-      el.textContent = `${cost.toFixed(2)}${suffix}`;
+      el.textContent = formatCost(cost, suffix);
     }
   });
 }
@@ -454,6 +466,7 @@ function deleteCustomAppliance(id) {
   const appliances = loadCustomAppliances().filter(a => a.id !== id);
   saveCustomAppliances(appliances);
   renderCustomAppliances();
+  if (lastData) updateCustomAppliances(lastData);
 }
 
 // Update chart
@@ -658,7 +671,7 @@ function updateChart(data) {
         x: {
           title: {
             display: true,
-            text: '48-Hour Window (Current Segment Centered)',
+            text: '48-Hour Price Window (Current Segment Highlighted)',
             font: {
               size: 13,
               weight: '500',
@@ -871,6 +884,7 @@ async function init() {
   }
 
   setupCountrySelector();
+  await initCustomAppliances();
   renderCustomAppliances();
   await requestNotificationPermission();
   await loadPrices();
