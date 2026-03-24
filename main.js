@@ -276,6 +276,7 @@ function createSettingsWindow() {
 
   // Create settings HTML
   const darkModeEnabled = store.get('darkMode', false);
+  const autoStartEnabled = store.get('autostart', false);
   const settingsHTML = `
 <!DOCTYPE html>
 <html>
@@ -392,7 +393,7 @@ function createSettingsWindow() {
         <div class="setting-label">Launch at Startup</div>
         <div class="setting-desc">Start NordPool Monitor when Windows starts</div>
       </div>
-      <div class="toggle" id="autostart-toggle" onclick="toggleAutoStart()"></div>
+      <div class="toggle ${autoStartEnabled ? 'active' : ''}" id="autostart-toggle" onclick="toggleAutoStart()"></div>
     </div>
   </div>
 
@@ -429,18 +430,10 @@ function createSettingsWindow() {
   <button onclick="closeSettings()">Close</button>
 
   <script>
-    // Check current auto-start setting
-    const autoStartEnabled = localStorage.getItem('autostart') === 'true';
-    const autostartToggle = document.getElementById('autostart-toggle');
-    if (autoStartEnabled) {
-      autostartToggle.classList.add('active');
-    }
-
     function toggleAutoStart() {
       const toggle = document.getElementById('autostart-toggle');
       const enabled = !toggle.classList.contains('active');
       toggle.classList.toggle('active');
-      localStorage.setItem('autostart', enabled);
       if (window.electronAPI && window.electronAPI.setAutoStart) {
         window.electronAPI.setAutoStart(enabled);
       }
