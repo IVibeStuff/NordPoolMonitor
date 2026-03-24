@@ -766,6 +766,34 @@ ipcMain.on('set-autostart', (event, enabled) => {
 // Return current dark mode state
 ipcMain.handle('get-dark-mode', () => store.get('darkMode', false));
 
+// Return current alert settings
+ipcMain.handle('get-alert-settings', () => ({
+  lowPriceAlert: store.get('lowPriceAlert', true),
+  highPriceAlert: store.get('highPriceAlert', false)
+}));
+
+// Handle low price alert setting
+ipcMain.on('set-low-price-alert', (event, enabled) => {
+  store.set('lowPriceAlert', enabled);
+  if (mainWindow) {
+    mainWindow.webContents.send('alert-settings-changed', {
+      lowPriceAlert: enabled,
+      highPriceAlert: store.get('highPriceAlert', false)
+    });
+  }
+});
+
+// Handle high price alert setting
+ipcMain.on('set-high-price-alert', (event, enabled) => {
+  store.set('highPriceAlert', enabled);
+  if (mainWindow) {
+    mainWindow.webContents.send('alert-settings-changed', {
+      lowPriceAlert: store.get('lowPriceAlert', true),
+      highPriceAlert: enabled
+    });
+  }
+});
+
 // Handle dark mode setting
 ipcMain.on('set-dark-mode', (event, enabled) => {
   store.set('darkMode', enabled);
