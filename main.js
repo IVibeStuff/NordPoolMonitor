@@ -139,7 +139,10 @@ function createColoredIconPNG(colorHex) {
 
 // Load the app icon from build/icon.ico
 function createIcon() {
-  return nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.ico'));
+  const icon = nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.ico'));
+  if (!icon.isEmpty()) return icon;
+  // Fallback: generate a simple colored icon if ico loading fails
+  return createColoredIconPNG('#f59e0b');
 }
 
 // Update all icons (price level tracked for future use)
@@ -573,8 +576,9 @@ function createTray() {
   console.log('\n=== CREATING SYSTEM TRAY ===');
   
   try {
-    // Create tray
-    tray = new Tray(createIcon());
+    // Create tray (resize to 16x16 for Windows system tray)
+    const trayIcon = createIcon().resize({ width: 16, height: 16 });
+    tray = new Tray(trayIcon);
     console.log('✓ Tray object created');
     
     // Set tooltip immediately
