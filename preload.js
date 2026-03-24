@@ -17,5 +17,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getDarkMode: () => ipcRenderer.invoke('get-dark-mode'),
   onDarkModeChange: (callback) => {
     ipcRenderer.on('dark-mode-changed', (event, enabled) => callback(enabled));
+  },
+  setLowPriceAlert: (enabled) => {
+    ipcRenderer.send('set-low-price-alert', enabled);
+  },
+  setHighPriceAlert: (enabled) => {
+    ipcRenderer.send('set-high-price-alert', enabled);
+  },
+  getAlertSettings: () => ipcRenderer.invoke('get-alert-settings'),
+  onAlertSettingsChange: (callback) => {
+    ipcRenderer.on('alert-settings-changed', (event, settings) => callback(settings));
   }
 });
