@@ -22,7 +22,7 @@ Professional desktop application for monitoring Nord Pool electricity prices.
 - ✅ One-click installation
 - ✅ **Dark mode** (toggle in Settings)
 - ✅ **Chart zoom** — scroll to zoom, drag to pan, double-click or button to reset
-- ✅ **Auto-update** — automatically checks for new versions and notifies via tray
+- ✅ **Auto-update** — automatically checks for new versions; download and install from the main window
 - ✅ **Customizable Cost Calculator** — add your own appliances with power rating and duration; costs persist across restarts
 
 ### **Smart Alerts** 🔔
@@ -36,7 +36,7 @@ Professional desktop application for monitoring Nord Pool electricity prices.
 
 ### **For End Users:**
 
-1. Download `NordPool-Monitor-Setup-5.10.0.exe`
+1. Download `NordPool-Monitor-Setup-5.11.0.exe`
 2. Run the installer
 3. Follow installation wizard
 4. Launch from desktop shortcut or Start menu
@@ -82,14 +82,14 @@ npm run build:win
   - Close button minimizes to tray
 
 - **Notifications:**
-  - Appear automatically when price is low
+  - Appear automatically when price is low or high (configurable in Settings)
   - Click to open app window
   - Auto-dismiss after 8 seconds
 
 ### **Auto-Start (Optional):**
 To run on Windows startup:
-1. Right-click app in system tray
-2. Settings → Enable auto-start
+1. Click the ⚙ button in the main window
+2. Enable auto-start
 
 ## 🔧 Configuration
 
