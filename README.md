@@ -15,6 +15,7 @@ Professional desktop application for monitoring Nord Pool electricity prices.
 - ✅ System tray integration
 - ✅ **Background price monitoring**
 - ✅ **Configurable Low & High Price Alerts**
+- ✅ **Configurable electricity fees with day/night network rates and VAT**
 - ✅ Auto-start capability
 - ✅ Runs in background (even when window closed)
 - ✅ Professional installer
@@ -34,7 +35,7 @@ Professional desktop application for monitoring Nord Pool electricity prices.
 
 ### **For End Users:**
 
-1. Download `NordPool-Monitor-Setup-5.7.0.exe`
+1. Download `NordPool-Monitor-Setup-5.8.0.exe`
 2. Run the installer
 3. Follow installation wizard
 4. Launch from desktop shortcut or Start menu
