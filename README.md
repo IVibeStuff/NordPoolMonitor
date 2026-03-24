@@ -14,7 +14,7 @@ Professional desktop application for monitoring Nord Pool electricity prices.
 ### **Desktop Features**
 - ✅ System tray integration
 - ✅ **Background price monitoring**
-- ✅ **Native Windows notifications**
+- ✅ **Configurable Low & High Price Alerts**
 - ✅ Auto-start capability
 - ✅ Runs in background (even when window closed)
 - ✅ Professional installer
