@@ -346,6 +346,11 @@ function calculateCost(kw, durationMinutes, data) {
   return totalCost;
 }
 
+function formatCost(cost, currency) {
+  if (cost >= 100) return `${(cost / 100).toFixed(2)}€`;
+  return `${cost.toFixed(2)}${currency}`;
+}
+
 // Update calculator
 function updateCalculator(data) {
   if (!data.current) return;
@@ -369,13 +374,99 @@ function updateCalculator(data) {
 
   // Update display (costs are already in cents/senti - don't multiply by 100!)
   const suffix = data.currency;
-  document.getElementById('calc-dishwasher').textContent = `${dishwasherCost.toFixed(2)}${suffix}`;
-  document.getElementById('calc-boiler-40').textContent = `${boiler40Cost.toFixed(2)}${suffix}`;
-  document.getElementById('calc-boiler-60').textContent = `${boiler60Cost.toFixed(2)}${suffix}`;
-  document.getElementById('calc-washer').textContent = `${washerCost.toFixed(2)}${suffix}`;
-  document.getElementById('calc-heatpump-25').textContent = `${heatpump25Cost.toFixed(2)}${suffix}`;
-  document.getElementById('calc-heatpump-40').textContent = `${heatpump40Cost.toFixed(2)}${suffix}`;
-  document.getElementById('calc-gaming-pc').textContent = `${gamingPCCost.toFixed(2)}${suffix}`;
+  document.getElementById('calc-dishwasher').textContent = formatCost(dishwasherCost, suffix);
+  document.getElementById('calc-boiler-40').textContent = formatCost(boiler40Cost, suffix);
+  document.getElementById('calc-boiler-60').textContent = formatCost(boiler60Cost, suffix);
+  document.getElementById('calc-washer').textContent = formatCost(washerCost, suffix);
+  document.getElementById('calc-heatpump-25').textContent = formatCost(heatpump25Cost, suffix);
+  document.getElementById('calc-heatpump-40').textContent = formatCost(heatpump40Cost, suffix);
+  document.getElementById('calc-gaming-pc').textContent = formatCost(gamingPCCost, suffix);
+  updateCustomAppliances(data);
+}
+
+// Custom appliances — in-memory cache backed by electron-store
+let _customAppliances = [];
+
+async function initCustomAppliances() {
+  if (window.electronAPI && window.electronAPI.getCustomAppliances) {
+    _customAppliances = await window.electronAPI.getCustomAppliances();
+  }
+}
+
+function loadCustomAppliances() {
+  return _customAppliances;
+}
+
+function saveCustomAppliances(appliances) {
+  _customAppliances = appliances;
+  if (window.electronAPI && window.electronAPI.setCustomAppliances) {
+    window.electronAPI.setCustomAppliances(appliances);
+  }
+}
+
+function renderCustomAppliances() {
+  const appliances = loadCustomAppliances();
+  const container = document.getElementById('custom-appliances');
+  container.innerHTML = '';
+  appliances.forEach(a => {
+    const item = document.createElement('div');
+    item.className = 'calc-item';
+    item.id = `custom-appliance-${a.id}`;
+    item.innerHTML = `
+      <div class="calc-label">${a.name} (${a.watts}W, ${a.durationMinutes}min)</div>
+      <div class="calc-cost-row">
+        <div class="calc-cost" id="calc-custom-${a.id}">--</div>
+        <button class="calc-delete-btn" onclick="deleteCustomAppliance('${a.id}')" title="Remove">×</button>
+      </div>`;
+    container.appendChild(item);
+  });
+}
+
+function updateCustomAppliances(data) {
+  const appliances = loadCustomAppliances();
+  const suffix = data.currency;
+  appliances.forEach(a => {
+    const el = document.getElementById(`calc-custom-${a.id}`);
+    if (el) {
+      const cost = calculateCost(a.watts / 1000, a.durationMinutes, data);
+      el.textContent = formatCost(cost, suffix);
+    }
+  });
+}
+
+function showAddApplianceForm() {
+  document.getElementById('add-appliance-form').style.display = 'flex';
+  document.getElementById('add-appliance-btn').style.display = 'none';
+  document.getElementById('new-appliance-name').focus();
+}
+
+function cancelAddAppliance() {
+  document.getElementById('add-appliance-form').style.display = 'none';
+  document.getElementById('add-appliance-btn').style.display = 'block';
+  document.getElementById('new-appliance-name').value = '';
+  document.getElementById('new-appliance-watts').value = '';
+  document.getElementById('new-appliance-duration').value = '60';
+}
+
+function saveNewAppliance() {
+  const name = document.getElementById('new-appliance-name').value.trim();
+  const watts = parseInt(document.getElementById('new-appliance-watts').value);
+  const duration = parseInt(document.getElementById('new-appliance-duration').value) || 60;
+  if (!name || !watts || watts < 1) return;
+
+  const appliances = loadCustomAppliances();
+  appliances.push({ id: Date.now().toString(), name, watts, durationMinutes: duration });
+  saveCustomAppliances(appliances);
+  renderCustomAppliances();
+  if (lastData) updateCustomAppliances(lastData);
+  cancelAddAppliance();
+}
+
+function deleteCustomAppliance(id) {
+  const appliances = loadCustomAppliances().filter(a => a.id !== id);
+  saveCustomAppliances(appliances);
+  renderCustomAppliances();
+  if (lastData) updateCustomAppliances(lastData);
 }
 
 // Update chart
@@ -580,7 +671,7 @@ function updateChart(data) {
         x: {
           title: {
             display: true,
-            text: '48-Hour Window (Current Segment Centered)',
+            text: '48-Hour Price Window (Current Segment Highlighted)',
             font: {
               size: 13,
               weight: '500',
@@ -793,6 +884,8 @@ async function init() {
   }
 
   setupCountrySelector();
+  await initCustomAppliances();
+  renderCustomAppliances();
   await requestNotificationPermission();
   await loadPrices();
   startAutoRefresh();

@@ -235,6 +235,90 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .calc-cost-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .calc-delete-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+      opacity: 0.5;
+      transition: opacity 0.15s;
+    }
+    .calc-delete-btn:hover { opacity: 1; }
+
+    .add-appliance-form {
+      display: flex;
+      gap: 8px;
+      padding: 12px 0 4px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .add-appliance-form input {
+      flex: 1;
+      min-width: 80px;
+      padding: 6px 10px;
+      border: 1px solid var(--bg-secondary);
+      border-radius: 8px;
+      font-size: 13px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+    #custom-appliances .calc-item:first-child { padding-top: 16px; }
+    #custom-appliances .calc-item { border-bottom: 1px solid var(--bg-secondary); }
+    .add-appliance-form input::placeholder { color: var(--text-secondary); }
+    .add-appliance-form input::-webkit-inner-spin-button,
+    .add-appliance-form input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .add-appliance-btn-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+    .btn-add-save {
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-add-cancel {
+      background: none;
+      border: 1px solid var(--bg-secondary);
+      color: var(--text-secondary);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-add-appliance {
+      background: none;
+      border: 1px dashed var(--bg-secondary);
+      color: var(--text-secondary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-add-appliance:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-primary);
+    }
+
     /* Footer */
     .footer {
       text-align: center;
@@ -437,7 +521,7 @@
         <!-- Chart -->
         <div class="card">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <div class="card-title" style="margin-bottom:0;">48-Hour Price Window</div>
+            <div class="card-title" style="margin-bottom:0;">48-Hour Market Price Window</div>
             <button class="reset-zoom-btn" id="reset-zoom-btn" onclick="resetChartZoom()" style="display:none;">Reset Zoom</button>
           </div>
           <div class="chart-container">
@@ -468,34 +552,45 @@
 
         <!-- Cost Calculator -->
         <div class="card">
-          <div class="card-title">Cost Calculator (Next 60 Minutes)</div>
+          <div class="card-title">Cost Calculator with Taxes</div>
           <div id="calculator-content">
             <div class="calc-item">
-              <div class="calc-label">Dishwasher (1500W)</div>
+              <div class="calc-label">Dishwasher (1500W, 60 min)</div>
               <div class="calc-cost" id="calc-dishwasher">--</div>
             </div>
             <div class="calc-item">
-              <div class="calc-label">Water heater (2000W, 40-60L)</div>
+              <div class="calc-label">Water heater (2000W, 60-90 min)</div>
               <div class="calc-cost">
                 <span id="calc-boiler-40">--</span> - 
                 <span id="calc-boiler-60">--</span>
               </div>
             </div>
             <div class="calc-item">
-              <div class="calc-label">Washing machine (500W)</div>
+              <div class="calc-label">Washing machine (500W, 60 min)</div>
               <div class="calc-cost" id="calc-washer">--</div>
             </div>
             <div class="calc-item">
-              <div class="calc-label">Gaming PC (750W)</div>
+              <div class="calc-label">Gaming PC (750W, 60 min)</div>
               <div class="calc-cost" id="calc-gaming-pc">--</div>
             </div>
             <div class="calc-item">
-              <div class="calc-label">Heat pump (2.5-4.0kW)</div>
+              <div class="calc-label">Heat pump (2.5-4.0kW, 60 min)</div>
               <div class="calc-cost">
                 <span id="calc-heatpump-25">--</span> - 
                 <span id="calc-heatpump-40">--</span>
               </div>
             </div>
+            <div id="custom-appliances"></div>
+            <div id="add-appliance-form" class="add-appliance-form" style="display:none;">
+              <input type="text" id="new-appliance-name" placeholder="Name" maxlength="30" />
+              <input type="number" id="new-appliance-watts" placeholder="Watts" min="1" max="99999" />
+              <input type="number" id="new-appliance-duration" placeholder="Minutes" min="1" max="9999" value="60" />
+              <div class="add-appliance-btn-row">
+                <button class="btn-add-save" onclick="saveNewAppliance()">Add</button>
+                <button class="btn-add-cancel" onclick="cancelAddAppliance()">Cancel</button>
+              </div>
+            </div>
+            <button class="btn-add-appliance" id="add-appliance-btn" onclick="showAddApplianceForm()">+ Add appliance</button>
           </div>
         </div>
       </div>

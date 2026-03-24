@@ -38,5 +38,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setIncludeVat: (enabled) => ipcRenderer.send('set-include-vat', enabled),
   onFeeSettingsChange: (callback) => {
     ipcRenderer.on('fee-settings-changed', (event, settings) => callback(settings));
-  }
+  },
+  getCustomAppliances: () => ipcRenderer.invoke('get-custom-appliances'),
+  setCustomAppliances: (appliances) => ipcRenderer.invoke('set-custom-appliances', appliances)
 });
