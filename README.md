@@ -25,10 +25,10 @@ Professional desktop application for monitoring Nord Pool electricity prices.
 - ✅ **Auto-update** — automatically checks for new versions and notifies via tray
 
 ### **Smart Alerts** 🔔
-- Automatic notification when price enters lowest 25%
-- Notification appears **once** per low-price period
+- **Low Price Alert** — notifies when price enters the lowest 25%; toggleable in Settings (default: on)
+- **High Price Alert** — notifies when price enters the highest 25%; toggleable in Settings (default: off)
+- Each alert fires **once** per price period and resets when the price moves out of that range
 - Auto-dismisses after 8 seconds
-- Resets when price goes up
 - Works even when app is minimized to tray
 
 ## 📦 Installation
