@@ -277,6 +277,8 @@ function createSettingsWindow() {
   // Create settings HTML
   const darkModeEnabled = store.get('darkMode', false);
   const autoStartEnabled = store.get('autostart', false);
+  const lowPriceAlertEnabled = store.get('lowPriceAlert', true);
+  const highPriceAlertEnabled = store.get('highPriceAlert', false);
   const settingsHTML = `
 <!DOCTYPE html>
 <html>
@@ -400,20 +402,20 @@ function createSettingsWindow() {
   <div class="setting-group">
     <div class="setting-row">
       <div>
-        <div class="setting-label">Background Monitoring</div>
-        <div class="setting-desc">Check prices every 15 minutes (always enabled)</div>
+        <div class="setting-label">Low Price Alert</div>
+        <div class="setting-desc">Notify when electricity price is at its lowest</div>
       </div>
-      <div class="toggle active"></div>
+      <div class="toggle ${lowPriceAlertEnabled ? 'active' : ''}" id="lowprice-toggle" onclick="toggleLowPriceAlert()"></div>
     </div>
   </div>
 
   <div class="setting-group">
     <div class="setting-row">
       <div>
-        <div class="setting-label">Notifications</div>
-        <div class="setting-desc">Alert when price is in lowest 33% (always enabled)</div>
+        <div class="setting-label">High Price Alert</div>
+        <div class="setting-desc">Notify when electricity price is at its highest</div>
       </div>
-      <div class="toggle active"></div>
+      <div class="toggle ${highPriceAlertEnabled ? 'active' : ''}" id="highprice-toggle" onclick="toggleHighPriceAlert()"></div>
     </div>
   </div>
 
@@ -436,6 +438,24 @@ function createSettingsWindow() {
       toggle.classList.toggle('active');
       if (window.electronAPI && window.electronAPI.setAutoStart) {
         window.electronAPI.setAutoStart(enabled);
+      }
+    }
+
+    function toggleLowPriceAlert() {
+      const toggle = document.getElementById('lowprice-toggle');
+      const enabled = !toggle.classList.contains('active');
+      toggle.classList.toggle('active');
+      if (window.electronAPI && window.electronAPI.setLowPriceAlert) {
+        window.electronAPI.setLowPriceAlert(enabled);
+      }
+    }
+
+    function toggleHighPriceAlert() {
+      const toggle = document.getElementById('highprice-toggle');
+      const enabled = !toggle.classList.contains('active');
+      toggle.classList.toggle('active');
+      if (window.electronAPI && window.electronAPI.setHighPriceAlert) {
+        window.electronAPI.setHighPriceAlert(enabled);
       }
     }
 
