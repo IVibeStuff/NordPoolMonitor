@@ -401,6 +401,12 @@
     }
 
     /* Refresh Button */
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .refresh-btn {
       background: var(--bg-card);
       border: 1px solid var(--border-light);
@@ -411,10 +417,26 @@
       color: var(--text-secondary);
       font-weight: 500;
       transition: all 0.15s;
-      margin-top: 8px;
     }
 
     .refresh-btn:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    .settings-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+      line-height: 1;
+    }
+
+    .settings-btn:hover {
       background: var(--bg-secondary);
       color: var(--text-primary);
     }
@@ -486,6 +508,7 @@
           </button>
         </div>
         <button class="refresh-btn" onclick="refreshData()">Refresh Now</button>
+        <button class="settings-btn" onclick="window.electronAPI && window.electronAPI.openSettings()" title="Settings">⚙</button>
       </div>
     </div>
 

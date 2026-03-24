@@ -640,12 +640,6 @@ function updateTrayMenu(currentPrice = null, priceLevel = 'moderate') {
         }
       }
     },
-    {
-      label: 'Settings',
-      click: () => {
-        createSettingsWindow();
-      }
-    },
     { type: 'separator' },
     ...(updateState.downloaded ? [{
       label: '⬆ Restart to Update',
@@ -850,6 +844,7 @@ ipcMain.on('set-include-vat', (event, enabled) => { store.set('includeVat', enab
 
 ipcMain.handle('get-custom-appliances', () => store.get('customAppliances', []));
 ipcMain.handle('set-custom-appliances', (_, appliances) => { store.set('customAppliances', appliances); });
+ipcMain.on('open-settings', () => { createSettingsWindow(); });
 
 // Return current alert settings
 ipcMain.handle('get-alert-settings', () => ({
