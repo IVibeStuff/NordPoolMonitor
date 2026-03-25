@@ -13,6 +13,7 @@ let mainWindow = null;
 let settingsWindow = null;
 let tray = null;
 let priceCheckInterval = null;
+let autoUpdaterInterval = null;
 let currentPriceLevel = 'moderate'; // 'low', 'moderate', 'high'
 
 
@@ -900,7 +901,7 @@ app.whenReady().then(() => {
   // Check for updates on startup and then every 24 hours (only in production)
   if (app.isPackaged) {
     setTimeout(() => autoUpdater.checkForUpdates(), 5000);
-    setInterval(() => autoUpdater.checkForUpdates(), 24 * 60 * 60 * 1000);
+    autoUpdaterInterval = setInterval(() => autoUpdater.checkForUpdates(), 24 * 60 * 60 * 1000);
   }
   
   // Set auto-start if previously enabled
@@ -928,7 +929,7 @@ app.on('activate', () => {
 
 // Cleanup on quit
 app.on('before-quit', () => {
-  if (priceCheckInterval) {
-    clearInterval(priceCheckInterval);
-  }
+  app.isQuitting = true;
+  if (priceCheckInterval) clearInterval(priceCheckInterval);
+  if (autoUpdaterInterval) clearInterval(autoUpdaterInterval);
 });
