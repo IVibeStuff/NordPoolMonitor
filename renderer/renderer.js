@@ -86,12 +86,12 @@ function showLowPriceNotification(data) {
   // Show in-app banner
   const banner = document.getElementById('notification-banner');
   banner.textContent = `Good time to use energy! Price is ${price} ${currency}/kWh (lowest 25% today)`;
-  banner.classList.remove('hidden');
-  
-  // Auto-hide banner after 10 seconds
+  banner.classList.remove('hidden', 'high-price');
+
+  // Auto-hide banner after 15 seconds
   setTimeout(() => {
     banner.classList.add('hidden');
-  }, 10000);
+  }, 15000);
   
   // Show browser notification if permitted
   if ('Notification' in window && Notification.permission === 'granted') {
@@ -130,9 +130,10 @@ function showHighPriceNotification(data) {
   const banner = document.getElementById('notification-banner');
   banner.textContent = `Heads up: price is HIGH right now (${price} ${currency}/kWh)`;
   banner.classList.remove('hidden');
+  banner.classList.add('high-price');
   setTimeout(() => {
     banner.classList.add('hidden');
-  }, 10000);
+  }, 15000);
 
   if ('Notification' in window && Notification.permission === 'granted') {
     const notification = new Notification('⚡ Energy Price Alert', {
