@@ -30,14 +30,14 @@ Professional desktop application for monitoring Nord Pool electricity prices.
 - **Low Price Alert** — notifies when price enters the lowest 25%; toggleable in Settings (default: on)
 - **High Price Alert** — notifies when price enters the highest 25%; toggleable in Settings (default: off)
 - Each alert fires **once** per price period and resets when the price moves out of that range
-- Auto-dismisses after 8 seconds
+- Auto-dismisses after 15 seconds
 - Works even when app is minimized to tray
 
 ## 📦 Installation
 
 ### **For End Users:**
 
-1. Download `NordPool-Monitor-Setup-5.13.0.exe`
+1. Download `NordPool-Monitor-Setup-5.13.3.exe`
 2. Run the installer
 3. Follow installation wizard
 4. Launch from desktop shortcut or Start menu
@@ -85,7 +85,7 @@ npm run build:win
 - **Notifications:**
   - Appear automatically when price is low or high (configurable in Settings)
   - Click to open app window
-  - Auto-dismiss after 8 seconds
+  - Auto-dismiss after 15 seconds
 
 ### **Auto-Start (Optional):**
 To run on Windows startup:
