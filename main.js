@@ -4,6 +4,7 @@ const zlib = require('zlib');
 const Store = require('electron-store');
 const axios = require('axios');
 const { autoUpdater } = require('electron-updater');
+const { createColoredIcon } = require('./icon-generator');
 
 // Store for persistent settings
 const store = new Store();
@@ -141,24 +142,30 @@ function createColoredIconPNG(colorHex) {
   return nativeImage.createFromBuffer(rgbaToPNG(rgba, size, size));
 }
 
-// Load the app icon from build/icon.ico
-function createIcon() {
-  const icon = nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.ico'));
-  if (!icon.isEmpty()) return icon;
-  // Fallback: generate a simple colored icon if ico loading fails
-  return createColoredIconPNG('#f59e0b');
+// Create colored tray icon based on price level
+function createIcon(priceLevel = 'moderate') {
+  const colors = { low: '#22c55e', moderate: '#f59e0b', high: '#ef4444' };
+  const color = colors[priceLevel] || colors.moderate;
+  try {
+    return createColoredIcon(color, 32);
+  } catch (e) {
+    return createColoredIconPNG(color);
+  }
 }
 
-// Update all icons (price level tracked for future use)
+// Update tray icon to reflect current price level
 function updateAllIcons(priceLevel) {
   currentPriceLevel = priceLevel;
+  if (tray) {
+    tray.setImage(createIcon(priceLevel).resize({ width: 16, height: 16 }));
+  }
 }
 
 // Create main window
 function createWindow() {
   console.log('Creating main window...');
 
-  const startIcon = createIcon();
+  const startIcon = nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.ico'));
   
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -581,7 +588,7 @@ function createTray() {
   
   try {
     // Create tray (resize to 16x16 for Windows system tray)
-    const trayIcon = createIcon().resize({ width: 16, height: 16 });
+    const trayIcon = createIcon(currentPriceLevel).resize({ width: 16, height: 16 });
     tray = new Tray(trayIcon);
     console.log('✓ Tray object created');
     
@@ -870,6 +877,12 @@ ipcMain.on('set-high-price-alert', (event, enabled) => {
 });
 
 // Handle dark mode setting
+ipcMain.on('update-tray-price', (event, priceDisplay, priceLevel) => {
+  updateAllIcons(priceLevel);
+  updateTrayMenu(priceDisplay, priceLevel);
+  if (tray) tray.setToolTip(`NordPool Monitor - ${priceDisplay}`);
+});
+
 ipcMain.on('set-dark-mode', (event, enabled) => {
   store.set('darkMode', enabled);
   if (mainWindow) {
