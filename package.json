@@ -1,7 +1,7 @@
 {
   "name": "nordpool-monitor",
   "productName": "NordPool Monitor",
-  "version": "5.12.0",
+  "version": "5.13.0",
   "description": "Professional electricity price monitor for Estonia, Finland, Latvia, and Lithuania",
   "main": "main.js",
   "author": "NordPool Monitor",
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "axios": "^1.6.0",
+    "canvas": "^3.2.2",
     "electron-store": "^8.1.0",
     "electron-updater": "^6.8.3"
   },

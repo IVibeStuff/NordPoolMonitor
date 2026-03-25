@@ -172,6 +172,13 @@ async function loadPrices(forceRefresh = false) {
     // Check for price alerts
     checkPriceAlert(data);
 
+    // Keep tray in sync with renderer
+    if (window.electronAPI && window.electronAPI.updateTrayPrice) {
+      const zoneToLevel = { cheap: 'low', moderate: 'moderate', expensive: 'high' };
+      const level = zoneToLevel[data.current.zone] || 'moderate';
+      window.electronAPI.updateTrayPrice(`${data.current.pricePerKwh.toFixed(2)} ${data.currency}/kWh`, level);
+    }
+
     showLoading(false);
   } catch (error) {
     console.error('Error loading prices:', error);
@@ -724,7 +731,7 @@ function updateChart(data) {
           },
           ticks: {
             callback: function(value, index) {
-              const actualIndex = index + startIndex;
+              const actualIndex = value + startIndex;
               if (actualIndex < allPrices.length) {
                 const timestamp = allPrices[actualIndex].timestamp;
                 const minute = timestamp.getMinutes();

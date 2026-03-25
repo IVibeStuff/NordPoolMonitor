@@ -48,5 +48,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   restartToUpdate: () => ipcRenderer.send('restart-to-update'),
   onUpdateStatus: (callback) => {
     ipcRenderer.on('update-status', (event, status) => callback(status));
-  }
+  },
+  updateTrayPrice: (priceDisplay, priceLevel) => ipcRenderer.send('update-tray-price', priceDisplay, priceLevel)
 });
